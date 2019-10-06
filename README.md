@@ -1,5 +1,6 @@
 # ntugp
 NTU game programming project
+
 #Updates:
 - 191006 ver:
   - 角色可以擲骰子，透過GameManager修改action point之後，進行移動。
