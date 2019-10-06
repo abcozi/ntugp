@@ -15,6 +15,7 @@ NTU game programming project
 - Unity Chan: 可以使用於VRM模型的動畫Package
 - Tile Map Package: 地圖Package
 - Unity Network Lobby Package
+
 #Assets:
 - VRM資料夾：
   有四個角色的vrm檔(andrea, brandon, celine, dean)
