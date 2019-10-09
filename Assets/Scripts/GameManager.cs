@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
 		return true;
 		//回傳可以put ward
 	}*/
-	public void M_ChangeView(int[] wardLocation)
+	public void M_ChangeView(Vector3 wardLocation)
 	{
 		//code
 	}

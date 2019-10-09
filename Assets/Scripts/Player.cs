@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class Player : MonoBehaviour
 {
@@ -20,8 +21,13 @@ public class Player : MonoBehaviour
 	private int p_diceAmount;//amount of player's dices
 	private float p_attack; //attack value of a player
 	private Vector3 p_location;//player's location
-	private int[,] p_view;//player's view. Displayed by a 2d array. -1: never been, 0: have been but not available now, 1: available.
-	private List<int[]> p_wardLocations = new List<int[]>();//list of ward locations
+    
+    //player's view. Displayed by a 2d array. 0:從來沒去過, 1: 去過現在沒視野, 
+    //2: 現在的視野(個人狀態：9格會有2，結盟狀態：18格會有2），每次movement都要更新。
+	private int[,] p_view = new int[25, 25];//map size is 25x25
+	
+    //private List<int[]> p_wardLocations = new List<int[]>();//list of ward locations
+    private List<Vector3> p_wardLocations = new List<Vector3>();//list of ward locations
 	private int p_actionPoint;//record the action point owned by a player
     private bool p_movingMode = false;//define if player is in moving mode
 	/* 
@@ -44,8 +50,15 @@ public class Player : MonoBehaviour
         //get player rigidBody
         p_rigidBody = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
-        anim.Play("WAIT04");
-        Debug.Log("Wait04");
+        //anim.Play("WAIT04");
+        //Debug.Log("Wait04");
+        for(int i = 0 ; i < 25 ; i ++)
+        {
+            for(int j = 0 ; j < 25 ; j ++)
+            {
+                p_view[i, j] = 0;
+            }
+        }
     }
 
     // Update is called once per frame
@@ -96,6 +109,7 @@ public class Player : MonoBehaviour
 	    }	
         //update ui 上顯示的 action point
         P_UpdateActionPointText();
+        P_UpdateView(p_location);
 	}
     /*
 		Method: P_RowDice
@@ -145,9 +159,50 @@ public class Player : MonoBehaviour
 		if true，GameManager.ChangeView繼續更新ward location lists.
 		並且呼叫player的view setter。
     */
-    public void P_PutWard(int[] wardLocation)
+    public void P_PutWard(Vector3 wardLocation)
     {
     	GameManager.gameManager.M_ChangeView(wardLocation);
+    }
+    public void P_UpdateView(Vector3 pCurrentLocation)
+    {
+        int x = Convert.ToInt32(Math.Round(pCurrentLocation.x));
+        int z = Convert.ToInt32(Math.Round(pCurrentLocation.z));
+        //將上個位置到過的地方設為1
+        for(int i = 0 ; i < 25 ; i ++)
+        {
+            for(int j = 0 ; j < 25 ; j ++)
+            {
+                if(p_view[i, j] == 2)
+                {
+                    p_view[i, j] = 1;
+                }
+            }
+        }
+        //將現在所在位置的視野設為2
+        for(int i = x - 1 ; i <= x + 1 ; i ++)
+        {
+            for(int j = z - 1 ; j <= z + 1 ; j ++)
+            {
+                //忽略超過地圖範圍的點
+                if(i >= 0 && j >= 0 && i < 25 && j < 25)
+                {
+                    p_view[i, j] = 2;
+                }
+            }
+        }
+        Debug.Log("View updated: ");
+        string logMessage = "   [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] "+
+        "[12] [13] [14] [15] [16] [17] [18] [19] [20] [21] [22] [23] [24] [25]\n";
+        for(int i = 0 ; i < 25 ; i ++)
+        {
+            logMessage +="["+i+"] ";
+            for(int j = 0 ; j < 25 ; j ++)
+            {
+                logMessage += p_view[i,j]+", ";
+            }
+            logMessage += "\n";
+        }
+        Debug.Log(logMessage);
     }
     /*
 		Getters And Setters
@@ -187,11 +242,8 @@ public class Player : MonoBehaviour
         //make the player face the movement direction
         float moveHorizontal = Input.GetAxisRaw ("Horizontal");
         float moveVertical = Input.GetAxisRaw ("Vertical");
-          
         Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
         player.transform.rotation = Quaternion.LookRotation(movement);
-          
-          
         player.transform.Translate (movement * 1 * Time.deltaTime, Space.World);
     }
     public int[,] P_GetView()
@@ -202,11 +254,11 @@ public class Player : MonoBehaviour
     {
     	p_view = viewv;
     }
-    public List<int[]> P_GetWardLocations()
+    public List<Vector3> P_GetWardLocations()
     {
     	return p_wardLocations;
     }
-    public void P_SetWardLocations(List<int[]> wardLocations)
+    public void P_SetWardLocations(List<Vector3> wardLocations)
     {
     	p_wardLocations = wardLocations;
     }
