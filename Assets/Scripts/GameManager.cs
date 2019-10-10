@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class GameManager : MonoBehaviour
 {
 	private int M_roundstate;
 	private int M_roundtime;
-	private int M_actionpoint;
 	public static GameManager gameManager;
 	private Player player;
 
@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
 	public void M_Movement( int dir )
 	{
 		Vector3 location = player.P_GetLocation();
+		int tempActionPoint = player.P_GetActionPoint();
 		Debug.Log("x: "+location.x+", y: "+location.y+", z: "+location.z);
 		//紀錄現在的location
 		if( dir == 0 )
@@ -45,7 +46,8 @@ public class GameManager : MonoBehaviour
 			location.x += 1;
 			//向右走
 		}
-		M_actionpoint -= 1;
+		tempActionPoint -= 1;
+		player.P_SetActionPoint( tempActionPoint );
 		//消耗actionpoint
 		player.P_SetLocation( location );
 		//更動Player的Location
@@ -74,16 +76,56 @@ public class GameManager : MonoBehaviour
 		player.P_SetActionPoint( num );
 	}
 
-	/*public void PutWard( Vector3 wardlocation )
-	{
 
-		return true;
-		//回傳可以put ward
-	}*/
-	public void M_ChangeView(Vector3 wardLocation)
+	public void M_ChangeView( Vector3 wardLocation )
 	{
-		//code
+		List<Vector3> temps = player.P_GetWardLocations();
+		//儲存p layer的wardlocationlist到temps中
+		temps.Add( wardLocation );
+		//將要新增的wardLocation新增到temps中
+		player.P_SetWardLocations( temps );
+		//將player的wardlocationlist改成temps
+		M_ChangeWardView( temps );
+		//更新視野	
 	}
+
+	/*
+		Method: M_ChangeView
+		呼叫時需輸入要插眼的位置wardLocation
+		用P_GetWardLocations暫存player所有ward的list到temps
+		將wardLocation加入temps中
+		用P_SetWardLocations改變player所有ward的list
+		用M_ChangWardView更新View
+	*/
+
+	public void M_ChangeWardView( List<Vector3> inputs )
+	{
+		int[,] temp = new int [25,25];
+		foreach( Vector3 input in inputs )
+		{
+			int x = Convert.ToInt32(Math.Round(input.x));
+			int z = Convert.ToInt32(Math.Round(input.z));
+			temp = player.P_GetView();
+			for(int i = x - 1 ; i <= x + 1 ; i ++)
+        	{
+            	for(int j = z - 1 ; j <= z + 1 ; j ++)
+            	{
+            	    //忽略超過地圖範圍的點
+            	    if(i >= 0 && j >= 0 && i < 25 && j < 25)
+            	    {
+            	        temp[i, j] = 3;
+            	    }
+            	}
+        	}
+        	//將每個ward周圍九宮格的視野改成3
+		}
+		player.P_SetView( temp );
+	}
+
+
+
+
+
 
 
 
