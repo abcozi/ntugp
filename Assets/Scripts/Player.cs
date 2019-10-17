@@ -10,6 +10,7 @@ using System;
 
 public class Player : MonoBehaviour
 {
+    int mapSize = Global.mapSize;
 	private Rigidbody p_rigidBody;//get rigidBody of player
 	public static Player player;//player object
     public Animator anim;//player's animator
@@ -24,7 +25,8 @@ public class Player : MonoBehaviour
     
     //player's view. Displayed by a 2d array. 0:從來沒去過, 1: 去過現在沒視野, 
     //2: 現在的視野(個人狀態：9格會有2，結盟狀態：18格會有2），每次movement都要更新。
-	private int[,] p_view = new int[25, 25];//map size is 25x25
+    //3: 現在的眼的視野, 如果被拆掉, 改成1。
+	private int[,] p_view = new int[15, 15];//map size is 25x25
 	
     //private List<int[]> p_wardLocations = new List<int[]>();//list of ward locations
     private List<Vector3> p_wardLocations = new List<Vector3>();//list of ward locations
@@ -50,11 +52,15 @@ public class Player : MonoBehaviour
         //get player rigidBody
         p_rigidBody = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
-        //anim.Play("WAIT04");
-        //Debug.Log("Wait04");
-        for(int i = 0 ; i < 25 ; i ++)
+        //set player location randomly
+        System.Random rnd = new System.Random();
+        int x = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
+        int z = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
+        P_SetLocation(new Vector3(x, 0, z));
+        //set view
+        for(int i = 0 ; i < mapSize ; i ++)
         {
-            for(int j = 0 ; j < 25 ; j ++)
+            for(int j = 0 ; j < mapSize ; j ++)
             {
                 p_view[i, j] = 0;
             }
@@ -86,30 +92,33 @@ public class Player : MonoBehaviour
     */
 	public void P_Movement()
 	{
+        Vector3 fromLocation = P_GetLocation();
+        int x = Convert.ToInt32(Math.Round(fromLocation.x));
+        int z = Convert.ToInt32(Math.Round(fromLocation.z));
         //anim.Play("RUN00_F", -1, 0f);
-        if( Input.GetKeyDown( KeyCode.W ) )//往前走
+        if( Input.GetKeyDown( KeyCode.W ) && z + 1 <= mapSize - 1)//往前走
 	    {
 	    	GameManager.gameManager.M_Movement( 0 );
 	    	p_actionPoint -= 1;
 	    }
-	   	if( Input.GetKeyDown( KeyCode.A ) )//往左走
+	   	if( Input.GetKeyDown( KeyCode.A ) && x - 1 >= 0)//往左走
 	    {
 	    	GameManager.gameManager.M_Movement( 1 );
 	   		p_actionPoint -= 1;
 	   	}
-	   	if( Input.GetKeyDown( KeyCode.S ) )//往後走
+	   	if( Input.GetKeyDown( KeyCode.S ) && z - 1 >= 0 )//往後走
 	   	{
     		GameManager.gameManager.M_Movement( 2 );	    		
     		p_actionPoint -= 1;
 	    }
-	    if( Input.GetKeyDown( KeyCode.D ) )//往右走
+	    if( Input.GetKeyDown( KeyCode.D ) && x + 1 <= mapSize -1)//往右走
 	    {
 	    	GameManager.gameManager.M_Movement( 3 );
 	    	p_actionPoint -= 1;
 	    }	
         //update ui 上顯示的 action point
         P_UpdateActionPointText();
-        P_UpdateView(p_location);
+        P_UpdateView(fromLocation, p_location);
 	}
     /*
 		Method: P_RowDice
@@ -163,16 +172,19 @@ public class Player : MonoBehaviour
     {
     	GameManager.gameManager.M_ChangeView(wardLocation);
     }
-    public void P_UpdateView(Vector3 pCurrentLocation)
+    public void P_UpdateView(Vector3 fromLocation, Vector3 pCurrentLocation)
     {
+        int oldX = Convert.ToInt32(Math.Round(fromLocation.x));
+        int oldZ = Convert.ToInt32(Math.Round(fromLocation.z));
         int x = Convert.ToInt32(Math.Round(pCurrentLocation.x));
         int z = Convert.ToInt32(Math.Round(pCurrentLocation.z));
         //將上個位置到過的地方設為1
-        for(int i = 0 ; i < 25 ; i ++)
+        for(int i = oldX - 1 ; i <= oldX + 1 ; i ++)
         {
-            for(int j = 0 ; j < 25 ; j ++)
+            for(int j = oldZ - 1 ; j <= oldZ + 1 ; j ++)
             {
-                if(p_view[i, j] == 2)
+                //忽略超過地圖範圍的點&眼的可視範圍
+                if(i >= 0 && j >= 0 && i < mapSize && j < mapSize && p_view[i, j] != 3)
                 {
                     p_view[i, j] = 1;
                 }
@@ -183,8 +195,8 @@ public class Player : MonoBehaviour
         {
             for(int j = z - 1 ; j <= z + 1 ; j ++)
             {
-                //忽略超過地圖範圍的點
-                if(i >= 0 && j >= 0 && i < 25 && j < 25)
+                //忽略超過地圖範圍的點&眼的可視範圍
+                if(i >= 0 && j >= 0 && i < mapSize && j < mapSize && p_view[i, j] != 3)
                 {
                     p_view[i, j] = 2;
                 }
@@ -192,11 +204,11 @@ public class Player : MonoBehaviour
         }
         Debug.Log("View updated: ");
         string logMessage = "   [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] "+
-        "[12] [13] [14] [15] [16] [17] [18] [19] [20] [21] [22] [23] [24] [25]\n";
-        for(int i = 0 ; i < 25 ; i ++)
+        "[12] [13] [14] \n";
+        for(int i = 0 ; i < mapSize ; i ++)
         {
             logMessage +="["+i+"] ";
-            for(int j = 0 ; j < 25 ; j ++)
+            for(int j = 0 ; j < mapSize ; j ++)
             {
                 logMessage += p_view[i,j]+", ";
             }
