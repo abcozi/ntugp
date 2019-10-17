@@ -7560,7 +7560,7 @@ GameObject:
   - component: {fileID: 627398623}
   - component: {fileID: 627398624}
   m_Layer: 0
-  m_Name: Environment
+  m_Name: Map
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7592,7 +7592,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c79d1e1d9e03c470ea96a21b6c8d18ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSize: 15
   grassPrefab: {fileID: 1219471545100730, guid: 1b8fbee291cdc1046a281cb2b3b51bf7,
     type: 3}
   trapPrefab: {fileID: 1779254397466754, guid: eb3f51c9e4e6faa45b78a8c2a6e0c16d, type: 3}
@@ -22273,7 +22272,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c79d1e1d9e03c470ea96a21b6c8d18ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSize: 25
   grassPrefab: {fileID: 1219471545100730, guid: 1b8fbee291cdc1046a281cb2b3b51bf7,
     type: 3}
   trapPrefab: {fileID: 1779254397466754, guid: eb3f51c9e4e6faa45b78a8c2a6e0c16d, type: 3}
