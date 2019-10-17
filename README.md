@@ -6,6 +6,8 @@ NTU game programming project
 - 191017 ver:
   - 每次遊戲開始時，隨機產生地圖與角色生成點。
   - ＊待修改：禁止角色走出界部分可以再寫更精緻。
+  - 新增Map的member function S_Terrain(i, j)給game manager取得該座標地形。
+  - ＊待修改：地形尚未完全。
 
 - 191009 ver:
   - Assets/Scripts/Player.cs: 
