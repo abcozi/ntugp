@@ -2,6 +2,13 @@
 NTU game programming project
 
 #Updates:
+- 191009 ver:
+  - Assets/Scripts/Player.cs: 
+    - wardLocation使用List<Vector3>型態儲存。
+  - 地圖設定:
+    - 左下角座標為(0, 0, 0), 右下角(0, 0, 25), 左上角(25, 0, 0), 右上角(25, 0, 25)。
+    - size: 25x25。
+    - 邊界整齊不突出。
 - 191006 ver:
   - 角色可以擲骰子，透過GameManager修改action point之後，進行移動。
   - 加入角色移動動畫、跟拍攝影機Main Camera、隨身光源Point Light。
