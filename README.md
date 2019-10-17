@@ -2,6 +2,11 @@
 NTU game programming project
 
 #Updates:
+
+- 191017 ver:
+  - 每次遊戲開始時，隨機產生地圖與角色生成點。
+  - ＊待修改：禁止角色走出界部分可以再寫更精緻。
+
 - 191009 ver:
   - Assets/Scripts/Player.cs: 
     - wardLocation使用List<Vector3>型態儲存。
