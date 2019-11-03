@@ -1,7 +1,14 @@
 # ntugp
 NTU game programming project
 
-#Updates:
+## Updates:
+
+- 191103 ver:
+  - 連機功能: 玩家登入、進入遊戲大廳、開房間、加入房間、開始遊戲、選角色、選完進入遊戲畫面。
+  - 進入遊戲畫面後獲得player id。
+  - 大廳內房間清單設定：房間內最多只能有四位，滿四人時該房間在大廳會顯示為full。若房間已經開始遊戲，該房間會在大廳隱藏。
+  - 目前最低遊戲可行人數設為1人。（為了測試用途，正式版會改為4人）
+  - 連線固定連到rue伺服器（俄羅斯）。
 
 - 191017 ver:
   - 每次遊戲開始時，隨機產生地圖與角色生成點。
@@ -21,7 +28,7 @@ NTU game programming project
   - 加入角色移動動畫、跟拍攝影機Main Camera、隨身光源Point Light。
   - disable default map中的光源（Directional Light, Side Light, 跟發光物件屬性）。
  
-#Imported Packages: 
+## Imported Packages: 
 - UniVRM-0.53.0_6b07.unitypackage
   功能: 使3d建模人物可以相容於Unity
   import後會產生一個VRM的資料夾
@@ -30,7 +37,7 @@ NTU game programming project
 - Tile Map Package: 地圖Package
 - Unity Network Lobby Package
 
-#Assets:
+## Assets:
 - VRM資料夾：
   有四個角色的vrm檔(andrea, brandon, celine, dean)
   另外，UniVRM資料夾中有Scripts可以針對角色動作
