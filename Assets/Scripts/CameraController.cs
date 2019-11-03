@@ -8,13 +8,19 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-	public GameObject player;//player
+	private Player player;//player
 	private Vector3 offset;//角色與相機位置落差
     // Start is called before the first frame update
     void Start()
     {
         //紀錄剛開始角色與相機位置落差
+        //offset = transform.position - player.transform.position;
+        player = player = GameObject.Find("Player").GetComponent<Player>();
+        transform.position = new Vector3(player.transform.position.x-(float)0.03, player.transform.position.y+(float)3.47, 
+            player.transform.position.z-(float)0.77);
+        transform.rotation = Quaternion.Euler((float)67.655, (float)-0.859, 0);
         offset = transform.position - player.transform.position;
+        Debug.Log("offset: "+offset);
     }
 
     // The Camera Update should happen after normal Update methods.

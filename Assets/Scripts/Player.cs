@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class Player : MonoBehaviour
 {
@@ -18,6 +20,7 @@ public class Player : MonoBehaviour
 		private members(attributes) 
 	*/
 	private int p_id;//player id
+    private string p_nickName;
 	//private List<Item> p_items = new List<Item>();//item list of a player
 	private int p_diceAmount;//amount of player's dices
 	private float p_attack; //attack value of a player
@@ -50,13 +53,17 @@ public class Player : MonoBehaviour
     void Start()
     {
         //get player rigidBody
+        Debug.Log("Initializing player...");
         p_rigidBody = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
         //set player location randomly
+        /*
         System.Random rnd = new System.Random();
         int x = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
         int z = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
+        Debug.Log("x: "+x.ToString()+", z: "+z.ToString());
         P_SetLocation(new Vector3(x, 0, z));
+        */
         //set view
         for(int i = 0 ; i < mapSize ; i ++)
         {
@@ -227,6 +234,14 @@ public class Player : MonoBehaviour
     {
     	p_id = idv;
     }
+    public string P_GetNickName()
+    {
+        return p_nickName;
+    }
+    public void P_SetNickName(string nickName)
+    {
+        p_nickName = nickName;
+    }
     public int P_GetDiceAmount()
     {
     	return p_diceAmount;
@@ -252,11 +267,13 @@ public class Player : MonoBehaviour
     	p_location = locationv;
         player.transform.position = p_location;
         //make the player face the movement direction
+        /*
         float moveHorizontal = Input.GetAxisRaw ("Horizontal");
         float moveVertical = Input.GetAxisRaw ("Vertical");
         Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
         player.transform.rotation = Quaternion.LookRotation(movement);
         player.transform.Translate (movement * 1 * Time.deltaTime, Space.World);
+        */
     }
     public int[,] P_GetView()
     {

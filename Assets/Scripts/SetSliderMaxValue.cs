@@ -14,12 +14,13 @@ public class SetSliderMaxValue : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        //取得slider跟player component
-        slider = GameObject.Find("diceAmountSlider").GetComponent<Slider>();
-        player = GameObject.Find("Player").GetComponent<Player>();
+        
     }
     void Start()
     {
+        //取得slider跟player component
+        slider = GameObject.Find("diceAmountSlider").GetComponent<Slider>();
+        player = GameObject.Find("Player").GetComponent<Player>();
     }
 
     // Update is called once per frame
