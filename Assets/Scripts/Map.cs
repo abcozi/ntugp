@@ -8,12 +8,13 @@ public class Map : MonoBehaviour
     //每個grid:2維array存各個地形或道具的分布
     //gridObj:初始化(生成)prefab的2維array
     //mapSize:地圖邊長
-    private int[,] grassGrid, waterGrid, itemGrid, emptyGrid, isolatedGrid, bridgeGrid;
+    private int[,] grassGrid, waterGrid, itemGrid, emptyGrid, isolatedGrid, bridgeGrid, portalGrid, puddleGrid, trapGrid, treeGrid, reedGrid, barrenGrid;
     private int[,] S_Terrain;
+    private int[,] portalPair;
     private GameObject[,] gridObj;
-    private int mapSize = 15;
-    public GameObject grassPrefab, trapPrefab, waterPrefab, starPrefab, bridgePrefab;
-    //empty = 0, grass = 1, water = 2, isolated grass = 100
+    private int mapSize = 15, portalNum;
+    public GameObject grassPrefab, trapPrefab, waterPrefab, starPrefab, bridgePrefab, portalPrefab, puddlePrefab, treePrefab, reedPrefab, barrenPrefab, outerGrassPrefab;
+    //barren = 0, grass = 1, puddle = 2, reed = 3, trap = 4, tree = 5, portal = 6,  water = 7, isolated grass = 100
     //initialization
     void Start()
     {
@@ -24,6 +25,12 @@ public class Map : MonoBehaviour
         emptyGrid = new int[mapSize, mapSize];
         isolatedGrid = new int[mapSize, mapSize];
         bridgeGrid = new int[mapSize, mapSize];
+        portalGrid = new int[mapSize, mapSize];
+        puddleGrid = new int[mapSize, mapSize];
+        trapGrid = new int[mapSize, mapSize];
+        treeGrid = new int[mapSize, mapSize];
+        reedGrid = new int[mapSize, mapSize];
+        barrenGrid = new int[mapSize, mapSize];
         FillArray(ref emptyGrid, 1, mapSize, mapSize);
 
         gridObj = new GameObject[mapSize, mapSize];
@@ -34,11 +41,19 @@ public class Map : MonoBehaviour
         FillGrass();
         CreateWater();
         FillWater();
-        CreateBridge();
         FindIsolatedGrass();
-        CreateBridge();
-        CreateItem();
+        RemoveOnlyOneWater();
+        FillEmpty();
+        CreatePortal();
+        CreatePuddle();
+        CreateTrap();
+        CreateTree();
+        CreateReed();
+        CreateBarren();
+        //CreateBridge();
+        //CreateItem();
         SaveToTerrain();
+        CreateOuterGrass();
 
     }
     /*
@@ -50,6 +65,19 @@ public class Map : MonoBehaviour
         return (S_Terrain[i, j]);
     }
     /*
+     purpose:取得i row j col傳送門所傳送的地點
+     */
+    public (int, int) S_GetTransferLocation(int i, int j)
+    {
+        for(int x = 0; x < portalNum; x++)
+        {
+            if(portalPair[x, 0] == i && portalPair[x, 1] == j){
+                return (portalPair[x, 2], portalPair[x, 3]);
+            }
+        }
+        return (0, 0);
+    }
+    /*
     purpose:建造grass地形，隨機產生
     生成位置在Vector3(i, 0, j)，i與j的範圍是0~mapSize
     */
@@ -59,7 +87,7 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < mapSize; j++)
             {
-                if (Random.Range(0, 100) < 60)
+                if (Random.Range(0, 100) < 80)
                 {
                     grassGrid[i, j] = 1;
                     emptyGrid[i, j] = 0;
@@ -252,64 +280,111 @@ public class Map : MonoBehaviour
         }
     }
     /*
-    purpose:建造橋，選出被孤立的grass，且周圍4格被water包圍，任意選兩個方向在water上造橋，直到遇到grass則停止
+    purpose:去除只有單一的water
     */
-    private void CreateBridge()
+    private void RemoveOnlyOneWater()
     {
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
-                if (isolatedGrid[i, j] == 1 && waterGrid[i - 1, j] == 1 && waterGrid[i + 1, j] == 1 && waterGrid[i, j - 1] == 1 && waterGrid[i, j + 1] == 1)
+                int grassCount = 0;
+                if (waterGrid[i, j] == 1 && !IsBoundary(i, j))
                 {
-
-                    HashSet<int> randomNumbers = new HashSet<int>();
-                    randomNumbers.Add(Random.Range(0, 4));
-                    while (randomNumbers.Count < 2)
+                    if (grassGrid[i - 1, j] == 1)
                     {
-                        randomNumbers.Add(Random.Range(0, 4));
+                        grassCount++;
                     }
-
-                    isolatedGrid[i, j] = 0;
-                    grassGrid[i, j] = 0;
-                    bridgeGrid[i, j] = 1;
+                    if (grassGrid[i + 1, j] == 1)
+                    {
+                        grassCount++;
+                    }
+                    if (grassGrid[i, j - 1] == 1)
+                    {
+                        grassCount++;
+                    }
+                    if (grassGrid[i, j + 1] == 1)
+                    {
+                        grassCount++;
+                    }
+                }
+                if (grassCount == 4)
+                {
                     waterGrid[i, j] = 0;
+                    grassGrid[i, j] = 1;
                     Destroy(gridObj[i, j]);
-                    gridObj[i, j] = Instantiate(waterPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+                    gridObj[i, j] = Instantiate(grassPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
                     gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
-                    gridObj[i, j] = Instantiate(bridgePrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
-                    gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
-
-                    foreach (int x in randomNumbers)
-                    {
-                        if (x == 0)
-                        {
-                            CreateBridgeAbove(waterGrid, i, j, 0);
-                        }
-                        else if (x == 1)
-                        {
-                            CreateBridgeLeft(waterGrid, i, j, 0);
-                        }
-                        else if (x == 2)
-                        {
-                            CreateBridgeBelow(waterGrid, i, j, 0);
-                        }
-                        else if (x == 3)
-                        {
-                            CreateBridgeRight(waterGrid, i, j, 0);
-                        }
-                    }
-
-
-
                 }
             }
         }
     }
-    /*
-    purpose:隨機生成道具
+    private void FillEmpty()
+    {
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                if (emptyGrid[i, j] == 1)
+                {
+                    emptyGrid[i, j] = 0;
+                    grassGrid[i, j] = 1;
+                    gridObj[i, j] = Instantiate(grassPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+                    gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+                }
+            }
+        }
+    }
+    /*puddle
+    //purpose:建造傳送門
     */
-    private void CreateItem()
+    private void CreatePortal()
+    {
+        int i, j;
+
+        portalNum = Random.Range(2, 5);
+        while(portalNum % 2 != 0)
+        {
+            portalNum = Random.Range(2, 5);
+        }
+        portalPair = new int[portalNum, 4];
+        for(int x = 0; x < portalNum; x++)
+        {
+            i = Random.Range(0, mapSize);
+            j = Random.Range(0, mapSize);
+            while (grassGrid[i, j] != 1)
+            {
+                i = Random.Range(0, mapSize);
+                j = Random.Range(0, mapSize);
+            }
+            grassGrid[i, j] = 0;
+            portalGrid[i, j] = 1;
+            Destroy(gridObj[i, j]);
+            
+
+            if (x % 2 == 0)
+            {
+                portalPair[x, 0] = i;
+                portalPair[x, 1] = j;
+                portalPair[x + 1, 2] = i;
+                portalPair[x + 1, 3] = j;
+            }
+            else
+            {
+                portalPair[x, 0] = i;
+                portalPair[x, 1] = j;
+                portalPair[x - 1, 2] = i;
+                portalPair[x - 1, 3] = j;
+            }
+            gridObj[i, j] = Instantiate(portalPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+            gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+
+        }
+    }
+    /*
+    //purpose:建造泥巴
+    */
+    private void CreatePuddle()
     {
         int randomResult;
         int itemPossibility = mapSize / 3;
@@ -319,22 +394,189 @@ public class Map : MonoBehaviour
             for (int j = 0; j < mapSize; j++)
             {
                 randomResult = Random.Range(0, 100);
-                if ((grassGrid[i, j] == 1 || bridgeGrid[i, j] == 1) && randomResult < itemPossibility && !IsBoundary(i, j) && isolatedGrid[i, j] != 1)
+                if (grassGrid[i, j] == 1 && (randomResult < itemPossibility))
                 {
-                    gridObj[i, j] = Instantiate(trapPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+                    grassGrid[i, j] = 0;
+                    puddleGrid[i, j] = 1;
+                    Destroy(gridObj[i, j]);
+                    int rotatePossibility = Random.Range(0, 4);
+                    gridObj[i, j] = Instantiate(puddlePrefab, transform.position + new Vector3(i, 0, j), Quaternion.Euler(new Vector3(0, rotatePossibility * 90, 0)));
                     gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
-                }
-                if ((grassGrid[i, j] == 1 || bridgeGrid[i, j] == 1) && randomResult >= itemPossibility && randomResult < 3 * itemPossibility && !IsBoundary(i, j) && isolatedGrid[i, j] != 1)
-                {
-                    //gridObj[i, j] = Instantiate(starPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
-                    //gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
                 }
             }
         }
     }
+    private void CreateTrap()
+    {
+        int randomResult;
+        int itemPossibility = mapSize / 3;
+
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                randomResult = Random.Range(0, 100);
+                if (grassGrid[i, j] == 1 && (randomResult < itemPossibility))
+                {
+                    grassGrid[i, j] = 0;
+                    trapGrid[i, j] = 1;
+                    Destroy(gridObj[i, j]);
+                    gridObj[i, j] = Instantiate(trapPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+                    gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+                }
+            }
+        }
+    }
+    private void CreateTree()
+    {
+        int randomResult;
+        int itemPossibility = mapSize / 3;
+
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                randomResult = Random.Range(0, 100);
+                if (grassGrid[i, j] == 1 && (randomResult < itemPossibility))
+                {
+                    grassGrid[i, j] = 0;
+                    treeGrid[i, j] = 1;
+                    Destroy(gridObj[i, j]);
+                    gridObj[i, j] = Instantiate(treePrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+                    gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+                }
+            }
+        }
+    }
+    private void CreateReed()
+    {
+        int randomResult;
+        int itemPossibility = mapSize / 3;
+
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                randomResult = Random.Range(0, 100);
+                if (grassGrid[i, j] == 1 && (randomResult < itemPossibility))
+                {
+                    grassGrid[i, j] = 0;
+                    reedGrid[i, j] = 1;
+                    Destroy(gridObj[i, j]);
+                    int rotatePossibility = Random.Range(0, 4);
+                    gridObj[i, j] = Instantiate(reedPrefab, transform.position + new Vector3(i, 0, j), Quaternion.Euler(new Vector3(0, rotatePossibility * 90, 0)));
+                    gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+                }
+            }
+        }
+    }
+    private void CreateBarren()
+    {
+        int randomResult;
+        int itemPossibility = mapSize / 3;
+
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                randomResult = Random.Range(0, 100);
+                if (grassGrid[i, j] == 1 && (randomResult < itemPossibility))
+                {
+                    grassGrid[i, j] = 0;
+                    barrenGrid[i, j] = 1;
+                    Destroy(gridObj[i, j]);
+                    int rotatePossibility = Random.Range(0, 4);
+                    gridObj[i, j] = Instantiate(barrenPrefab, transform.position + new Vector3(i, 0, j), Quaternion.Euler(new Vector3(0, rotatePossibility * 90, 0)));
+                    gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+                }
+            }
+        }
+    }
+    ///*
+    //purpose:建造橋，選出被孤立的grass，且周圍4格被water包圍，任意選兩個方向在water上造橋，直到遇到grass則停止
+    //*/
+    //private void CreateBridge()
+    //{
+    //    for (int i = 0; i < mapSize; i++)
+    //    {
+    //        for (int j = 0; j < mapSize; j++)
+    //        {
+    //            if (isolatedGrid[i, j] == 1 && waterGrid[i - 1, j] == 1 && waterGrid[i + 1, j] == 1 && waterGrid[i, j - 1] == 1 && waterGrid[i, j + 1] == 1)
+    //            {
+
+    //                HashSet<int> randomNumbers = new HashSet<int>();
+    //                randomNumbers.Add(Random.Range(0, 4));
+    //                while (randomNumbers.Count < 2)
+    //                {
+    //                    randomNumbers.Add(Random.Range(0, 4));
+    //                }
+
+    //                isolatedGrid[i, j] = 0;
+    //                grassGrid[i, j] = 0;
+    //                bridgeGrid[i, j] = 1;
+    //                waterGrid[i, j] = 0;
+    //                Destroy(gridObj[i, j]);
+    //                gridObj[i, j] = Instantiate(waterPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+    //                gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+    //                gridObj[i, j] = Instantiate(bridgePrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+    //                gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+
+    //                foreach (int x in randomNumbers)
+    //                {
+    //                    if (x == 0)
+    //                    {
+    //                        CreateBridgeAbove(waterGrid, i, j, 0);
+    //                    }
+    //                    else if (x == 1)
+    //                    {
+    //                        CreateBridgeLeft(waterGrid, i, j, 0);
+    //                    }
+    //                    else if (x == 2)
+    //                    {
+    //                        CreateBridgeBelow(waterGrid, i, j, 0);
+    //                    }
+    //                    else if (x == 3)
+    //                    {
+    //                        CreateBridgeRight(waterGrid, i, j, 0);
+    //                    }
+    //                }
+
+
+
+    //            }
+    //        }
+    //    }
+    //}
+    ///*
+    //purpose:隨機生成道具
+    //*/
+    //private void CreateItem()
+    //{
+    //    int randomResult;
+    //    int itemPossibility = mapSize / 3;
+
+    //    for (int i = 0; i < mapSize; i++)
+    //    {
+    //        for (int j = 0; j < mapSize; j++)
+    //        {
+    //            randomResult = Random.Range(0, 100);
+    //            if ((grassGrid[i, j] == 1 || bridgeGrid[i, j] == 1) && randomResult < itemPossibility && !IsBoundary(i, j) && isolatedGrid[i, j] != 1)
+    //            {
+    //                gridObj[i, j] = Instantiate(trapPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+    //                gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+    //            }
+    //            if ((grassGrid[i, j] == 1 || bridgeGrid[i, j] == 1) && randomResult >= itemPossibility && randomResult < 3 * itemPossibility && !IsBoundary(i, j) && isolatedGrid[i, j] != 1)
+    //            {
+    //                //gridObj[i, j] = Instantiate(starPrefab, transform.position + new Vector3(i, 0, j), Quaternion.identity);
+    //                //gridObj[i, j].transform.parent = GameObject.Find("Map").transform;
+    //            }
+    //        }
+    //    }
+    //}
     /*
     purpose:將產生的地圖存入terrian 2d-array以供存取
     */
+    //barren = 0, grass = 1, puddle, reed = 3, trap = 4, tree = 5, portal = 6,  water = 7, isolated grass = 100
     private void SaveToTerrain()
     {
         S_Terrain = new int[mapSize, mapSize];
@@ -342,16 +584,112 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < mapSize; j++)
             {
-                if (grassGrid[i, j] == 1 || bridgeGrid[i, j] == 1)
+                if (barrenGrid[i, j] == 1)
+                {
+                    S_Terrain[i, j] = 0;
+                }
+                else if (grassGrid[i, j] == 1)
                 {
                     S_Terrain[i, j] = 1;
                 }
-                else if (waterGrid[i, j] == 1)
+                else if (puddleGrid[i, j] == 1)
                 {
                     S_Terrain[i, j] = 2;
                 }
-            }
+                else if (reedGrid[i, j] == 1)
+                {
+                    S_Terrain[i, j] = 3;
+                }
+                else if (trapGrid[i, j] == 1)
+                {
+                    S_Terrain[i, j] = 4;
+                }
+                else if (treeGrid[i, j] == 1)
+                {
+                    S_Terrain[i, j] = 5;
+                }
+                else if (portalGrid[i, j] == 1)
+                {
+                    S_Terrain[i, j] = 6;
+                }
+                else if (waterGrid[i, j] == 1)
+                {
+                    S_Terrain[i, j] = 7;
+                }
 
+            }
+        }
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                print(S_Terrain[i, j]);
+            }
+        }
+    }
+    private void CreateOuterGrass()
+    {
+        GameObject temp;
+        for(int i = 1; i < mapSize; i++)
+        {
+            for (int j = 1; j < mapSize; j++)
+            {
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(-i, 0, j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (i > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(i, 0, -j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (j > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+            }
+        }
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(-i, 0, -j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (i == 0 && j == 0 || j > mapSize / 3 || i > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(-i, 0, mapSize + j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (i == 0 && j == 0 || j > mapSize / 3 || i > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(mapSize + i, 0, -j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (i == 1 && j == 0 || j > mapSize / 3 || i > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(mapSize + i, 0, j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (i == 0 && j == 0 || i > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(i, 0, mapSize + j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (i == 0 && j == 1 || j > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+                temp = Instantiate(outerGrassPrefab, transform.position + new Vector3(mapSize + i, 0, mapSize + j), Quaternion.identity);
+                temp.transform.parent = GameObject.Find("Map").transform;
+                if (j > mapSize / 3 || i > mapSize / 3)
+                {
+                    Destroy(temp);
+                }
+
+            }
         }
     }
     /*
