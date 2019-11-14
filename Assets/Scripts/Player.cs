@@ -106,22 +106,18 @@ public class Player : MonoBehaviour
         if( Input.GetKeyDown( KeyCode.W ) && z + 1 <= mapSize - 1)//往前走
 	    {
 	    	GameManager.gameManager.M_Movement( 0 );
-	    	p_actionPoint -= 1;
 	    }
 	   	if( Input.GetKeyDown( KeyCode.A ) && x - 1 >= 0)//往左走
 	    {
 	    	GameManager.gameManager.M_Movement( 1 );
-	   		p_actionPoint -= 1;
 	   	}
 	   	if( Input.GetKeyDown( KeyCode.S ) && z - 1 >= 0 )//往後走
 	   	{
     		GameManager.gameManager.M_Movement( 2 );	    		
-    		p_actionPoint -= 1;
 	    }
 	    if( Input.GetKeyDown( KeyCode.D ) && x + 1 <= mapSize -1)//往右走
 	    {
 	    	GameManager.gameManager.M_Movement( 3 );
-	    	p_actionPoint -= 1;
 	    }	
         //update ui 上顯示的 action point
         P_UpdateActionPointText();
