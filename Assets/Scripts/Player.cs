@@ -56,6 +56,7 @@ public class Player : MonoBehaviour
         Debug.Log("Initializing player...");
         p_rigidBody = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
+        anim.Play("WALK00_F", -1, 0f);
         //set player location randomly
         /*
         System.Random rnd = new System.Random();
@@ -83,12 +84,13 @@ public class Player : MonoBehaviour
             //Animator plays "walk" animation at the beggining of a frame.
             //After walk animation, go back to wait.
             //anim.Play("WAIT00", -1, 0f);
-            //anim.Play("WAIT04", -1, 0f);
+            Debug.Log("walk");
+            anim.Play("WALK00_F", -1, 0f);
     		P_Movement();
     	}
         else
         {
-            anim.Play("WAIT00", -1, 0f);
+            anim.Play("WAIT04", -1, 0f);
         }
     }
     /*
@@ -102,7 +104,7 @@ public class Player : MonoBehaviour
         Vector3 fromLocation = P_GetLocation();
         int x = Convert.ToInt32(Math.Round(fromLocation.x));
         int z = Convert.ToInt32(Math.Round(fromLocation.z));
-        //anim.Play("RUN00_F", -1, 0f);
+        //anim.Play("WALK00_F", -1, 0f);
         if( Input.GetKeyDown( KeyCode.W ) && z + 1 <= mapSize - 1)//往前走
 	    {
 	    	GameManager.gameManager.M_Movement( 0 );
@@ -263,13 +265,13 @@ public class Player : MonoBehaviour
     	p_location = locationv;
         player.transform.position = p_location;
         //make the player face the movement direction
-        /*
+        
         float moveHorizontal = Input.GetAxisRaw ("Horizontal");
         float moveVertical = Input.GetAxisRaw ("Vertical");
         Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
         player.transform.rotation = Quaternion.LookRotation(movement);
         player.transform.Translate (movement * 1 * Time.deltaTime, Space.World);
-        */
+        
     }
     public int[,] P_GetView()
     {
