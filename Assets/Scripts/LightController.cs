@@ -5,6 +5,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class LightController : MonoBehaviour
 {
@@ -14,7 +16,7 @@ public class LightController : MonoBehaviour
     void Start()
     {
     	//設定角色位置與光源位置落差
-        player = player = GameObject.Find("Player").GetComponent<Player>();
+        player = player = GameObject.Find("Player"+PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"].ToString()).GetComponent<Player>();
         transform.position = new Vector3(player.transform.position.x+(float)0.00039, player.transform.position.y+(float)2.41671, 
             player.transform.position.z-(float)0.0221);
         transform.rotation = Quaternion.Euler((float)89.9720, 0, 0);

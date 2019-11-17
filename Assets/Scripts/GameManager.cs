@@ -2,7 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.IO;
 using System;
+using Photon.Pun;
+using Photon.Realtime;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,6 +14,12 @@ public class GameManager : MonoBehaviour
 	private int M_roundtime;
 	public static GameManager gameManager;
 	private Player player;
+	private int round = 0;
+	private int playerID = 0;
+	private int playerTeam = 0;
+	private int playerTeamMate = 0;
+	private int teamRound = 1;
+	private PhotonView photonView;
 
 	void Awake()
 	{
@@ -17,9 +27,50 @@ public class GameManager : MonoBehaviour
 		{
 			gameManager = this;
 		}
-		player = GameObject.Find("Player").GetComponent<Player>();
+		playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
+		player = GameObject.Find("Player"+playerID.ToString()).GetComponent<Player>();
+		playerTeam = player.P_GetTeam();
+		playerTeamMate = player.P_GetTeamMate();
+		photonView = GetComponent<PhotonView>();
 	}
-
+	float tempTime = 0;
+	void Update ()
+	{
+	    tempTime += Time.deltaTime;
+	    if (tempTime > 15)
+	    {
+	        tempTime = 0;
+	    	M_RoundUpdate();
+	    }
+	}
+	public void M_RoundUpdate()
+	{
+		if(PhotonNetwork.IsMasterClient)
+		{
+			if(teamRound == 1)
+			{
+				Debug.Log("change teamRound to 2");
+				teamRound = 2;
+			}
+			else
+			{
+				Debug.Log("change teamRound to 1");
+				teamRound = 1;
+			}
+			photonView.RPC("TeamRoundUpdate", RpcTarget.All, teamRound);
+		}
+		teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
+		if(teamRound == player.P_GetTeam())
+		{
+			//my team's round
+			Debug.Log("my team's round");
+		}
+		else
+		{
+			//not my team's round
+			Debug.Log("not my team's round");
+		}
+	}
 	public void M_Movement( int dir )
 	{
 		Vector3 location = player.P_GetLocation();
@@ -121,19 +172,5 @@ public class GameManager : MonoBehaviour
 		}
 		player.P_SetView( temp );
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

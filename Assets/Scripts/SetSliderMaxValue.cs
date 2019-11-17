@@ -6,6 +6,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class SetSliderMaxValue : MonoBehaviour
 {
@@ -20,7 +22,7 @@ public class SetSliderMaxValue : MonoBehaviour
     {
         //取得slider跟player component
         slider = GameObject.Find("diceAmountSlider").GetComponent<Slider>();
-        player = GameObject.Find("Player").GetComponent<Player>();
+        player = GameObject.Find("Player"+PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"].ToString()).GetComponent<Player>();
     }
 
     // Update is called once per frame

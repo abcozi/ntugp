@@ -39,7 +39,7 @@ public class GameSetupController : MonoBehaviour
         Debug.Log("x: "+x.ToString()+", z: "+z.ToString());
         
         GameObject obj = PhotonNetwork.Instantiate("VRM/"+characters[playerID-1], new Vector3(x, 0, z), Quaternion.identity, 0);
-        obj.name = "Player";
+        obj.name = "Player"+playerID.ToString();
         Player player = obj.GetComponent<Player>();
         player.P_SetId(playerID);
         player.P_SetNickName(PhotonNetwork.NickName);

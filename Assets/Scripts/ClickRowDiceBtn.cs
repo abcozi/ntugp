@@ -7,6 +7,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class ClickRowDiceBtn : MonoBehaviour
 {
@@ -43,7 +45,7 @@ public class ClickRowDiceBtn : MonoBehaviour
         GameObject diceSliderPanel = GameObject.Find("DiceSliderPanel");
         diceSliderPanel.SetActive(false);
         //send request amount to P_RowDice
-        player = GameObject.Find("Player").GetComponent<Player>();
+        player = GameObject.Find("Player"+PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"].ToString()).GetComponent<Player>();
         player.P_RowDice(diceAmountValue);
     }
 }
