@@ -2,6 +2,16 @@
 NTU game programming project
 
 ## Updates:
+- 191118 ver:
+  - 回合制雛形:
+    -- 由MasterClient掌控每個回合間的轉換(由GameManager.cs:37 Update()&M_RoundUpdate()處理)
+    -- M_TeamRoundUpdate()中呼叫RPC函式TeamRoundUpdate()更新LocalPlayer的teamRound值，LocalPLayer再各自判斷自己的隊伍是否為本次teamRound的值，再做出相對應的動作（攻or守）
+  - 分組與搭擋：
+    -- 初始化時隨機分為team1 & team2。team1先攻後守，team2先守後攻。
+    -- player awake時便會被assign p_team& p_teamMate值（自己的組別值 與 自己的搭擋id值），p_team值會被應用在回合判斷上。
+  - 角色：
+    -- 解決移動同步化的問題。
+    -- 加上角色移動動畫（步行、停止、面向行進方向）。
 
 - 191103 ver:
   - 連機功能: 玩家登入、進入遊戲大廳、開房間、加入房間、開始遊戲、選角色、選完進入遊戲畫面。
