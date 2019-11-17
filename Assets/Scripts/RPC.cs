@@ -3,34 +3,12 @@ using Photon.Realtime;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
+using System.IO;
 using System.Collections;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RPC : MonoBehaviour
 {
-	/*
-	[PunRPC]
-	void SetCharacterChoices(int imgID, Sprite sp)
-	{
-		GameObject tempListing = GameObject.Find("CharacterListing(clone)").GetComponent<GameObject>();
-		tempListing.name = "CharacterListing"+imgID.ToString();
-	    GameObject childObj =  tempListing.transform.GetChild(1).gameObject;
-	    childObj.name = "SelectedPlayerName"+imgID.ToString();
-	    //GameObject tempListing = Instantiate(Listing, Container);
-	    CharacterButton characterButton = tempListing.GetComponent<CharacterButton>();
-	    characterButton.SetDisplay(sp, imgID); 		
-	}
-    [PunRPC]
-    void GitParent(CharacterButton button)
-    {
-    	//this.gameObject = button;
-		this.gameObject.transform.parent = GameObject.Find ("CharacterDisplay").transform;
-		//this.gameObject.GetComponent<PhotonTransformView>()
-		this.gameObject.name = button.name;
-		//this.gameObject.transform.GetChild(1).gameObject.name = "SelectedPlayerName"+imgID.ToString();
-    	
-    }
-    */
     [PunRPC]
 	void CharacterListingUpdate(bool IsChosen, int selectedPlayerId, int imgID, string playerName)
 	{
@@ -51,31 +29,31 @@ public class RPC : MonoBehaviour
 			thisPlayerName.text = "";
 		}
 	}
-    /*
-    [PunRPC]
-	void CharacterListingUpdate(bool IsChosen, int selectedPlayerId, int imgID)
+	[PunRPC]
+	void SetTeams(int num1, int num2, int num3, int num4)
 	{
-		Text txt = GameObject.Find("SelectedPlayerName"+imgID.ToString()).GetComponent<Text>();
-    		
-	    if(!IsChosen)
-    	{
-    		Debug.Log("first click");
-    		txt.text = PhotonNetwork.NickName;
-    		IsChosen = true;
-    		selectedPlayerId = PhotonNetwork.LocalPlayer.GetHashCode();
-    	}
-    	else if(PhotonNetwork.LocalPlayer.GetHashCode() == selectedPlayerId)
-    	{
-    		//if same player click on the character again, cancel select
-    		Debug.Log("click again");
-    		txt.text = "";
-    		IsChosen = false;
-    		selectedPlayerId = -1;
-    	}
-    	else
-    	{
-    		Debug.Log("else");
-    	}
+		Debug.Log("setteams");
+		if(num1 == (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"])
+		{
+			PhotonNetwork.LocalPlayer.CustomProperties["team"] = 1;
+			PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num2;
+		}
+		else if(num2 == (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"])
+		{
+			PhotonNetwork.LocalPlayer.CustomProperties["team"] = 1;
+			PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num1;
+		}
+		else
+		{
+			if(num3 == (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"])
+			{
+				PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num4;
+			}
+			else
+			{
+				PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num3;
+			}
+			PhotonNetwork.LocalPlayer.CustomProperties["team"] = 2;
+		}
 	}
-	*/
 }

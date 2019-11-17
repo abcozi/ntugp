@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameSetupController : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class GameSetupController : MonoBehaviour
     [SerializeField]
     private GameObject lightController;
     int mapSize = Global.mapSize;
+    private PhotonView photonView;
     // This script will be added to any multiplayer scene
     void Start()
     {
@@ -49,5 +51,38 @@ public class GameSetupController : MonoBehaviour
         lightController.SetActive(true);
         //player.SetActive(true);
         //player.P_SetLocation(new Vector3(0, 0, 0));
+        /* distribute teams for players*/
+        if(PhotonNetwork.IsMasterClient)
+        {
+            /*
+            int getRanNum1 = rnd.Next(1, 5);
+            int getRanNum2 = rnd.Next(1, 5);
+            while(getRanNum2 == getRanNum1){
+                getRanNum2 = rnd.Next(1, 5);
+            }
+            Debug.Log("num1: "+getRanNum1.ToString()+", num2: "+getRanNum2.ToString());
+            photonView = GetComponent<PhotonView>();
+            */
+            photonView = GetComponent<PhotonView>();
+            List<int> list = new List<int>(){1, 2, 3, 4};
+            List<int> TempList = new List<int>();
+            int length = list.Count;
+            int TempIndex = 0;
+
+            while (length > 0) {
+                TempIndex = rnd.Next(0, length);  // get random value between 0 and original length
+                TempList.Add(list[TempIndex]); // add to temp list
+                list.RemoveAt(TempIndex); // remove from original list
+                length = list.Count;  // get new list <T> length.
+            }
+
+            list = new List<int>();
+            list = TempList; // copy all items from temp list to original list.
+            for(int i = 0 ; i < list.Count ; i ++)
+            {
+                Debug.Log("list["+i.ToString()+"]: "+list[i].ToString());
+            }
+            photonView.RPC("SetTeams", RpcTarget.All, list[0], list[1], list[2], list[3]);
+        }
     }
 }

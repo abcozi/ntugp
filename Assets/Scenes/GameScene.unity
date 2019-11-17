@@ -34419,6 +34419,40 @@ MonoBehaviour:
   gameManager: {fileID: 675609803}
   cameraController: {fileID: 775559108}
   lightController: {fileID: 274665288}
+--- !u!114 &1469152807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1469152805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 0
+  OwnershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 2
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &1469152808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1469152805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70269065fe6da49328730a10e5664283, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1469258714
 PrefabInstance:
   m_ObjectHideFlags: 0

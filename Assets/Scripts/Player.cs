@@ -33,9 +33,11 @@ public class Player : MonoBehaviour
 	
     //private List<int[]> p_wardLocations = new List<int[]>();//list of ward locations
     private List<Vector3> p_wardLocations = new List<Vector3>();//list of ward locations
-	private int p_actionPoint;//record the action point owned by a player
+	private int p_actionPoint = 0;//record the action point owned by a player
     private bool p_movingMode = false;//define if player is in moving mode
-	/* 
+	private int p_team;
+    private int p_teamMate;
+    /* 
 		methods 
 	*/
 	//Awake is called before Start(). Initialization
@@ -54,9 +56,13 @@ public class Player : MonoBehaviour
     {
         //get player rigidBody
         Debug.Log("Initializing player...");
+        p_team = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
+        p_teamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
+        Debug.Log("my team: "+p_team.ToString()+", mate: "+p_teamMate.ToString());
+        
         p_rigidBody = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
-        anim.Play("WALK00_F", -1, 0f);
+        //anim.Play("WALK00_F", -1, 0f);
         //set player location randomly
         /*
         System.Random rnd = new System.Random();
@@ -73,6 +79,7 @@ public class Player : MonoBehaviour
                 p_view[i, j] = 0;
             }
         }
+        anim.Play("WAIT04");
     }
 
     // Update is called once per frame
@@ -84,13 +91,13 @@ public class Player : MonoBehaviour
             //Animator plays "walk" animation at the beggining of a frame.
             //After walk animation, go back to wait.
             //anim.Play("WAIT00", -1, 0f);
-            Debug.Log("walk");
-            anim.Play("WALK00_F", -1, 0f);
+            //Debug.Log("walk");
+            anim.Play("WALK");
     		P_Movement();
     	}
         else
         {
-            anim.Play("WAIT04", -1, 0f);
+            anim.Play("WAIT00");
         }
     }
     /*
@@ -296,5 +303,13 @@ public class Player : MonoBehaviour
     public void P_SetActionPoint(int actionPointV)
     {
     	p_actionPoint = actionPointV;
+    }
+    public int P_GetTeam()
+    {
+        return p_team;
+    }
+    public int P_GetTeamMate()
+    {
+        return p_teamMate;
     }
 }
