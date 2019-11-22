@@ -2,8 +2,12 @@
 NTU game programming project
 
 ## Updates:
--191121 ver:
-  -回合制改善
+
+- 191123 ver:
+  - minimap雛形
+  - Scenes 排版整理(Scroll with screen size)
+- 191121 ver:
+  - 回合制改善
 - 191118 ver:
   - 回合制雛形:
     - 由MasterClient掌控每個回合間的轉換(由GameManager.cs:37 Update()&M_RoundUpdate()處理)
