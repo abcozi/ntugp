@@ -10,11 +10,15 @@ public class GameSetupController : MonoBehaviour
 {
     private List<string> characters = new List<string>(new string[] { "alice", "brandon", "charlotte", "dean" });
     [SerializeField]
-    private GameObject canvas;
+    private GameObject hudController;
+    [SerializeField]
+    private GameObject hud;
     [SerializeField]
     private GameObject gameManager;
     [SerializeField]
     private GameObject cameraController;
+    [SerializeField]
+    private GameObject subCameraController;
     [SerializeField]
     private GameObject lightController;
     int mapSize = Global.mapSize;
@@ -46,9 +50,11 @@ public class GameSetupController : MonoBehaviour
         Debug.Log("player id: "+player.P_GetId().ToString()+", name: "+player.P_GetNickName());
         //player.name = "Player";
         gameManager.SetActive(true);
-        canvas.SetActive(true);
+        hud.SetActive(true);
         cameraController.SetActive(true);
+        subCameraController.SetActive(true);
         lightController.SetActive(true);
+        hudController.SetActive(true);
         //player.SetActive(true);
         //player.P_SetLocation(new Vector3(0, 0, 0));
         /* distribute teams for players*/
