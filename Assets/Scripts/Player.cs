@@ -214,7 +214,7 @@ public class Player : MonoBehaviour
                 }
             }
         }
-        Debug.Log("View updated: ");
+        /*Debug.Log("View updated: ");*/
         string logMessage = "   [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] "+
         "[12] [13] [14] \n";
         for(int i = 0 ; i < mapSize ; i ++)
@@ -226,7 +226,7 @@ public class Player : MonoBehaviour
             }
             logMessage += "\n";
         }
-        Debug.Log(logMessage);
+        /*Debug.Log(logMessage);*/
     }
     /*
 		Getters And Setters

@@ -13,7 +13,11 @@ public class GameManager : MonoBehaviour
 	private int M_roundstate;
 	private int M_roundtime;
 	public static GameManager gameManager;
+	public GameObject diceSliderPanel;
+	public GameObject actionPointPanel;
 	private Player player;
+	private int roundstate = 0;
+	private int itemfetching = 0;
 	private int round = 0;
 	private int playerID = 0;
 	private int playerTeam = 0;
@@ -34,14 +38,51 @@ public class GameManager : MonoBehaviour
 		photonView = GetComponent<PhotonView>();
 	}
 	float tempTime = 0;
+	private float itemfetchingtime;
 	void Update ()
 	{
+		if( teamRound != player.P_GetTeam() )
+		{
+			diceSliderPanel.SetActive(false);
+		}
 	    tempTime += Time.deltaTime;
-	    if (tempTime > 15)
+	    itemfetchingtime += Time.deltaTime;
+	    if( roundstate == 0 && tempTime > 10 )
+	    {
+	    	tempTime = 0;
+	    	roundstate = 1;
+	    	if( teamRound == player.P_GetTeam() )
+	    	{
+	    		diceSliderPanel.SetActive( false );
+	    		actionPointPanel.SetActive( true );
+	    		player.P_RowDice(1);
+	    	}
+	    }
+	    if ( roundstate == 1 && tempTime > 20 )
 	    {
 	        tempTime = 0;
+	        roundstate = 0;
 	    	M_RoundUpdate();
 	    }
+
+	    if( itemfetching == 0 )
+	    {
+	    	itemfetchingtime = 0;
+	    }
+	    if( itemfetching == 1 && itemfetchingtime > 8 ) //8代表採集item所需的時間 
+	    {
+	    	itemfetching = 0;
+	    	itemfetchingtime = 0;
+	    }
+	}
+
+	public void M_ItemFetch( int terrain )
+	{
+		if ( itemfetching == 0 )
+		{
+			itemfetching = 1;
+			Debug.Log( "開始採集" + terrain );
+		}
 	}
 	public void M_RoundUpdate()
 	{
@@ -63,11 +104,14 @@ public class GameManager : MonoBehaviour
 		if(teamRound == player.P_GetTeam())
 		{
 			//my team's round
+			diceSliderPanel.SetActive( true );
 			Debug.Log("my team's round");
 		}
 		else
 		{
 			//not my team's round
+			player.P_SetActionPoint(0);
+			actionPointPanel.SetActive(false);
 			Debug.Log("not my team's round");
 		}
 	}
@@ -109,6 +153,8 @@ public class GameManager : MonoBehaviour
 		int temp = UnityEngine.Random.Range( num, num * 6 );
 		M_ChangeDice( -num );
 		M_GetPoint( temp );
+		tempTime = 10 - tempTime;
+		roundstate = 1;
 	}
 
 	public void M_ChangeDice( int num )
