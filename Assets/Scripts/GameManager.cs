@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
 	        tempTime = 0;
 	    	M_RoundUpdate();
 	    }
-	}
+    }
 	public void M_RoundUpdate()
 	{
 		if(PhotonNetwork.IsMasterClient)
@@ -172,5 +172,14 @@ public class GameManager : MonoBehaviour
 		}
 		player.P_SetView( temp );
 	}
+
+    public int M_GetTeamRound()
+    {
+        return teamRound;
+    }
+    public int M_GetRound()
+    {
+        return round;
+    }
 
 }

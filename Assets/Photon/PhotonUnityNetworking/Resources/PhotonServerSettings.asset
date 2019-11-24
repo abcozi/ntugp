@@ -40,5 +40,8 @@ MonoBehaviour:
   - SetTeams
   - teamRoundUpdate
   - TeamRoundUpdate
+  - UpdateFetchBarrenMap
+  - UpdateItemOnMap
+  - UpdateStepOnTheTrapMap
   DisableAutoOpenWizard: 1
   ShowSettings: 0
