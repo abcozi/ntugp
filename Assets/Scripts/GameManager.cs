@@ -24,6 +24,9 @@ public class GameManager : MonoBehaviour
 	private int playerTeamMate = 0;
 	private int teamRound = 1;
 	private PhotonView photonView;
+	private int usingitemnum = 0;
+	private List<int> itemusage = new List<int>();
+	
 
 	void Awake()
 	{
@@ -41,12 +44,16 @@ public class GameManager : MonoBehaviour
 	private float itemfetchingtime;
 	void Update ()
 	{
+		if( PhotonNetwork.IsMasterClient )
+		{
+			M_CountingTime();
+			photonView.RPC("TimeUpdate", RpcTarget.All, tempTime);
+		}
 		if( teamRound != player.P_GetTeam() )
 		{
 			diceSliderPanel.SetActive(false);
 		}
-	    tempTime += Time.deltaTime;
-	    itemfetchingtime += Time.deltaTime;
+	    
 	    if( roundstate == 0 && tempTime > 10 )
 	    {
 	    	tempTime = 0;
@@ -84,6 +91,12 @@ public class GameManager : MonoBehaviour
 			Debug.Log( "開始採集" + terrain );
 		}
 	}
+
+	public void M_CountingTime()
+	{
+		tempTime += Time.deltaTime;
+	    itemfetchingtime += Time.deltaTime;
+	}
 	public void M_RoundUpdate()
 	{
 		if(PhotonNetwork.IsMasterClient)
@@ -92,11 +105,13 @@ public class GameManager : MonoBehaviour
 			{
 				Debug.Log("change teamRound to 2");
 				teamRound = 2;
+				round++;
 			}
 			else
 			{
 				Debug.Log("change teamRound to 1");
 				teamRound = 1;
+				round++;
 			}
 			photonView.RPC("TeamRoundUpdate", RpcTarget.All, teamRound);
 		}
@@ -115,6 +130,7 @@ public class GameManager : MonoBehaviour
 			Debug.Log("not my team's round");
 		}
 	}
+
 	public void M_Movement( int dir )
 	{
 		Vector3 location = player.P_GetLocation();
@@ -156,6 +172,24 @@ public class GameManager : MonoBehaviour
 		tempTime = 10 - tempTime;
 		roundstate = 1;
 	}
+
+	/*public void M_UsingItem( int item )
+	{
+		if( item == 0 )
+		{
+			itemusage[usingitemnum][0] = item;
+			itemusage[usingitemnum][1] = round;
+			usingitemnum++;
+		}
+	}
+
+	public void M_UsedItem( int item )
+	{
+		if( item == 0 )
+		{
+
+		}
+	}*/
 
 	public void M_ChangeDice( int num )
 	{

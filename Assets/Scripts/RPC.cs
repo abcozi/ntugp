@@ -62,4 +62,9 @@ public class RPC : MonoBehaviour
 		Debug.Log("teamRoundUpdate; this teamRound: "+team.ToString());
 		PhotonNetwork.LocalPlayer.CustomProperties["teamRound"] = team;
 	}
+	[PunRPC]
+	void TimeUpdate( float TempTime )
+	{
+		PhotonNetwork.LocalPlayer.CustomProperties["temptime"] = TempTime;
+	}
 }

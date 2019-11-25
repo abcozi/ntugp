@@ -40,5 +40,6 @@ MonoBehaviour:
   - SetTeams
   - teamRoundUpdate
   - TeamRoundUpdate
+  - TimeUpdate
   DisableAutoOpenWizard: 1
   ShowSettings: 0
