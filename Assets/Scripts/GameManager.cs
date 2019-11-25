@@ -38,15 +38,16 @@ public class GameManager : MonoBehaviour
 		photonView = GetComponent<PhotonView>();
 	}
 	float tempTime = 0;
-	private float itemfetchingtime;
 	void Update ()
 	{
+		if( PhotonNetwork.IsMasterClient )
+		{
+			M_CountingTime();
+		}
 		if( teamRound != player.P_GetTeam() )
 		{
 			diceSliderPanel.SetActive(false);
 		}
-	    tempTime += Time.deltaTime;
-	    itemfetchingtime += Time.deltaTime;
 	    if( roundstate == 0 && tempTime > 10 )
 	    {
 	    	tempTime = 0;
@@ -64,6 +65,12 @@ public class GameManager : MonoBehaviour
 	        roundstate = 0;
 	    	M_RoundUpdate();
 	    }
+	    photonView.RPC("TimeUpdate", RpcTarget.All, tempTime);
+	}
+
+	public void M_CountingTime()
+	{
+		tempTime += Time.deltaTime;
 	}
 	public void M_RoundUpdate()
 	{
