@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
 	        roundstate = 0;
 	    	M_RoundUpdate();
 	    }
-
+	}
 	public void M_RoundUpdate()
 	{
 		if(PhotonNetwork.IsMasterClient)
@@ -96,6 +96,7 @@ public class GameManager : MonoBehaviour
 			Debug.Log("not my team's round");
 		}
 	}
+	
 	public void M_Movement( int dir )
 	{
 		Vector3 location = player.P_GetLocation();
