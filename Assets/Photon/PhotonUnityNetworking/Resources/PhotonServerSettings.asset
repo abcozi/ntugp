@@ -40,5 +40,7 @@ MonoBehaviour:
   - SetTeams
   - teamRoundUpdate
   - TeamRoundUpdate
+  - changePLayerVisibilityInMinimap
+  - HideOrShowCharacter
   DisableAutoOpenWizard: 1
   ShowSettings: 0

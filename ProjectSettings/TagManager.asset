@@ -17,9 +17,9 @@ TagManager:
   - 
   - PostProcessing
   - 
-  - Sub Camera Layer
-  - 
-  - 
+  - Eye
+  - HideInMinimap
+  - ShowInMinimap
   - 
   - 
   - 
