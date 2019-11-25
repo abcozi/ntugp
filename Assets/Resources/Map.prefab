@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4892281860389484865
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4892281860389484864}
+  - component: {fileID: 4892281860389484927}
+  - component: {fileID: 4892281860389484926}
+  - component: {fileID: 4892281860389484925}
+  m_Layer: 0
+  m_Name: Map
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4892281860389484864
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4892281860389484865}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4892281860389484927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4892281860389484865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e9f2b8bcdf2a7f408da5ac9f7e69d17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grassPrefab: {fileID: 1219471545100730, guid: 6a527252afef08149ac265e530e3112c,
+    type: 3}
+  trapPrefab: {fileID: 1514077863869704851, guid: 385c32313caeba944bf762383160f558,
+    type: 3}
+  waterPrefab: {fileID: 1640771308685042, guid: 4ad797c221f2fdc48b06e49afb34cebb,
+    type: 3}
+  portalPrefab: {fileID: 4111637947603713197, guid: e57b3e6126632e9449ea61163e1c05a1,
+    type: 3}
+  puddlePrefab: {fileID: 9098992310223861700, guid: 29dea8480c77e924fa625e34007e085a,
+    type: 3}
+  treePrefab: {fileID: 2772996757858586776, guid: bf1aa51d9405cae4c85c1a248517ed4b,
+    type: 3}
+  reedPrefab: {fileID: 5601364868045648109, guid: 86bf0a883ce32d84daf3e308e610a2cd,
+    type: 3}
+  barrenPrefab: {fileID: 7508806076984046272, guid: 50e0748b19397a742b59a5f603252073,
+    type: 3}
+  outerGrassPrefab: {fileID: 2872965136216543389, guid: d5cb8cc2c04db0649978495c12ef105f,
+    type: 3}
+  storePrefab: {fileID: 1310948221791215797, guid: 0f8e5b25666b124408993c01d8feac4b,
+    type: 3}
+  purpleAPrefab: {fileID: 5565457204478787359, guid: ba2be57a7e342524d9f404b158d23452,
+    type: 3}
+  purpleBPrefab: {fileID: 8176154859943864704, guid: 46d6dcfacbd3fbd43a3c4fb6a9baf6ea,
+    type: 3}
+  purpleCPrefab: {fileID: 3749942858513648551, guid: 491b07f4834ec7a4daed4b02554a3a6e,
+    type: 3}
+  purpleDPrefab: {fileID: 3798607204357245761, guid: b35fb9111d11a664681f91c784fd4b6f,
+    type: 3}
+  blueAPrefab: {fileID: 8407518235113417109, guid: c41d740dd88c73c448184f0a07b6e3cc,
+    type: 3}
+  blueBPrefab: {fileID: 1941478222957141393, guid: 76b543fc6a7ca644b9f950ccd465f01e,
+    type: 3}
+  blueCPrefab: {fileID: 5973065867401627029, guid: 3ba8305503600d943a75c2caf83ef170,
+    type: 3}
+  cam: {fileID: 0}
+--- !u!114 &4892281860389484926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4892281860389484865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 4892281860389484925}
+  viewIdField: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &4892281860389484925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4892281860389484865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 0

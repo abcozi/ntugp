@@ -65,25 +65,6 @@ public class GameManager : MonoBehaviour
 	    	M_RoundUpdate();
 	    }
 
-	    if( itemfetching == 0 )
-	    {
-	    	itemfetchingtime = 0;
-	    }
-	    if( itemfetching == 1 && itemfetchingtime > 8 ) //8代表採集item所需的時間 
-	    {
-	    	itemfetching = 0;
-	    	itemfetchingtime = 0;
-	    }
-	}
-
-	public void M_ItemFetch( int terrain )
-	{
-		if ( itemfetching == 0 )
-		{
-			itemfetching = 1;
-			Debug.Log( "開始採集" + terrain );
-		}
-	}
 	public void M_RoundUpdate()
 	{
 		if(PhotonNetwork.IsMasterClient)
@@ -218,5 +199,14 @@ public class GameManager : MonoBehaviour
 		}
 		player.P_SetView( temp );
 	}
+
+    public int M_GetTeamRound()
+    {
+        return teamRound;
+    }
+    public int M_GetRound()
+    {
+        return round;
+    }
 
 }
