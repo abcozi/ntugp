@@ -37,21 +37,25 @@ public class RPC : MonoBehaviour
 		{
 			PhotonNetwork.LocalPlayer.CustomProperties["team"] = 1;
 			PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num2;
+			PhotonNetwork.LocalPlayer.CustomProperties["order"] = 1;
 		}
 		else if(num2 == (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"])
 		{
 			PhotonNetwork.LocalPlayer.CustomProperties["team"] = 1;
 			PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num1;
+			PhotonNetwork.LocalPlayer.CustomProperties["order"] = 2;
 		}
 		else
 		{
 			if(num3 == (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"])
 			{
 				PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num4;
+				PhotonNetwork.LocalPlayer.CustomProperties["order"] = 3;
 			}
 			else
 			{
 				PhotonNetwork.LocalPlayer.CustomProperties["teamMate"] = num3;
+				PhotonNetwork.LocalPlayer.CustomProperties["order"] = 4;
 			}
 			PhotonNetwork.LocalPlayer.CustomProperties["team"] = 2;
 		}
@@ -62,10 +66,17 @@ public class RPC : MonoBehaviour
 		Debug.Log("teamRoundUpdate; this teamRound: "+team.ToString());
 		PhotonNetwork.LocalPlayer.CustomProperties["teamRound"] = team;
 	}
-
 	[PunRPC]
-	void TimeUpdate( float time )
+	void HideOrShowCharacter(int pid, string layerName)
 	{
-		PhotonNetwork.LocalPlayer.CustomProperties["tempTime"] = time;
+		GameObject playerObj = GameObject.Find("Player"+pid.ToString());
+		playerObj.layer = LayerMask.NameToLayer(layerName);
+        Transform transform = playerObj.transform;
+        Transform[] childTrans = playerObj.GetComponentsInChildren<Transform>();
+        //child is your child transform
+        foreach(Transform child in childTrans)
+        {
+        	child.gameObject.layer = LayerMask.NameToLayer(layerName);
+        }
 	}
 }

@@ -9,6 +9,7 @@ using UnityEngine.UI;
 using System;
 using Photon.Pun;
 using Photon.Realtime;
+using System.IO;
 
 public class Player : MonoBehaviour
 {
@@ -21,9 +22,12 @@ public class Player : MonoBehaviour
 	*/
 	private int p_id;//player id
     private string p_nickName;
-	//private List<Item> p_items = new List<Item>();//item list of a player
-	private int p_diceAmount;//amount of player's dices
-	private float p_attack; //attack value of a player
+	private List<Item> p_items = new List<Item>();//item list of a player
+	private int p_diceAmount = 40;//amount of player's dices
+	private int p_attack = 4; //attack value of a player
+    private int p_defense = 3;
+    private int p_itemAmountMax = 6;
+
 	private Vector3 p_location;//player's location
     
     //player's view. Displayed by a 2d array. 0:從來沒去過, 1: 去過現在沒視野, 
@@ -37,6 +41,20 @@ public class Player : MonoBehaviour
     private bool p_movingMode = false;//define if player is in moving mode
 	private int p_team;
     private int p_teamMate;
+    private int p_wardAmountTotal = 5;
+    private int p_wardAmountUnused = 5;
+    private int p_wardAmountUsed = 0;
+    private List<Eye> wards = new List<Eye>();
+    private PhotonView photonView;
+    private GameObject playerObj;
+    private int skill;
+    private int order;//random order among players
+    /*  
+        skill
+        1.每三回合可以額外使用一顆免費骰子 
+        2.每三回合可以消耗一顆骰子，使下次攻擊將能偷取骰子並將偷取到的骰子均分給自己以及隊友
+        3.初始便會有三個隨機綠色道具，之後每五回合會再取得一個藍色以下道具
+    */
     /* 
 		methods 
 	*/
@@ -48,8 +66,7 @@ public class Player : MonoBehaviour
 		{
 			player = this;
 		}
-		p_diceAmount = 100;//set default dice amount to 100
-        p_location = player.transform.position;//set the current player location
+		p_location = player.transform.position;//set the current player location
 	}
     // Start is called before the first frame update
     void Start()
@@ -58,6 +75,7 @@ public class Player : MonoBehaviour
         Debug.Log("Initializing player...");
         p_team = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
         p_teamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
+        order = (int)PhotonNetwork.LocalPlayer.CustomProperties["order"];
         Debug.Log("my team: "+p_team.ToString()+", mate: "+p_teamMate.ToString());
         
         p_rigidBody = GetComponent<Rigidbody>();
@@ -80,11 +98,58 @@ public class Player : MonoBehaviour
             }
         }
         anim.Play("WAIT04");
+        playerObj = gameObject;
+        photonView = GetComponent<PhotonView>();
+        if(order%2 == 1)
+        {
+            p_diceAmount = 40;
+            p_attack = 3;
+            p_defense = 3;
+            p_itemAmountMax = 6;
+            skill = 1;
+            Debug.Log("sec1");
+        }
+        else if(order == 2)
+        {
+            p_diceAmount = 40;
+            p_attack = 5;
+            p_defense = 2;
+            p_itemAmountMax = 6;
+            skill = 2;
+            Debug.Log("sec2");
+        }
+        else//order == 4
+        {
+            p_diceAmount = 40;
+            p_attack = 4;
+            p_defense = 2;
+            p_itemAmountMax = 9;
+            skill = 3;
+            Debug.Log("sec3");
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        if(photonView.IsMine)
+        {
+            /*
+            Debug.Log("my photonView, id: "+photonView.ViewID.ToString()+", owner: "+photonView.Owner.NickName);
+            playerObj.layer = LayerMask.NameToLayer("HideInMinimap");
+            Transform transform = playerObj.transform;
+            Transform[] childTrans = playerObj.GetComponentsInChildren<Transform>();
+              //child is your child transform
+            foreach(Transform child in childTrans){
+                child.gameObject.layer = LayerMask.NameToLayer("HideInMinimap");
+            }
+            */
+            //photonView.RPC("")
+        }
+        else
+        {
+            Debug.Log("not my photonView, id: "+photonView.ViewID.ToString()+", owner: "+photonView.Owner.NickName);
+        }
     	//update movement in every frame if p_actionPoint > 0
     	if(p_actionPoint > 0 && p_movingMode)
     	{
@@ -99,6 +164,17 @@ public class Player : MonoBehaviour
         {
             anim.Play("WAIT00");
         }
+
+        //press Space: put ward at current location
+        if(Input.GetKeyDown("space") && p_wardAmountUnused >= 1)
+        {
+            //check if able to put ward(ward amount >= 1)
+            P_PutWard(p_location);
+            wards.Add(new Eye(p_id, p_team, p_location));
+            p_wardAmountUnused -= 1;
+            p_wardAmountUsed += 1;
+        }
+        //else if(Input.GetKeyDown(KeyCode.Q) && )
     }
     /*
 		Method: P_Movement
@@ -149,6 +225,9 @@ public class Player : MonoBehaviour
     	//send request dice amount to game manager
     	GameManager.gameManager.M_RowDice(requestDiceAmount);
         //update ui 上顯示的 action point
+        Text diceAmountText = GameObject.Find("diceAmount").GetComponent<Text>();
+        diceAmountText.text = p_diceAmount.ToString();
+        
         P_UpdateActionPointText();
     }
     /*
@@ -159,9 +238,10 @@ public class Player : MonoBehaviour
     {
         //get the game component
         Text actionPointText;
-        actionPointText = GameObject.Find("actionPointText").GetComponent<Text>();
+        actionPointText = GameObject.Find("actionPointAmount").GetComponent<Text>();
         //set the action point display
-        actionPointText.text = "Action Point: "+p_actionPoint.ToString()+", Dice Amount: "+p_diceAmount;
+        //actionPointText.text = "Action Point: "+p_actionPoint.ToString()+", Dice Amount: "+p_diceAmount;
+        actionPointText.text = p_actionPoint.ToString();
         //check if the player still has action point. if so, stay in the moving mode.
         //if not, set false to p_movingMode.
         if(p_actionPoint > 0)
@@ -255,13 +335,29 @@ public class Player : MonoBehaviour
     {
     	p_diceAmount = dav;
     }
-    public float P_GetAttack()
+    public int P_GetAttack()
     {
     	return p_attack;
     }
-    public void P_SetAttack(float attackv)
+    public void P_SetAttack(int attackv)
     {
     	p_attack = attackv;
+    }
+    public int P_GetDefense()
+    {
+        return p_defense;
+    }
+    public void P_SetDefense(int d)
+    {
+        p_defense = d;
+    }
+    public int P_GetItemAmountMax()
+    {
+        return p_itemAmountMax;
+    }
+    public void P_SetItemAmountMax(int maxV)
+    {
+        p_itemAmountMax = maxV;
     }
     public Vector3 P_GetLocation()
     {
@@ -312,4 +408,25 @@ public class Player : MonoBehaviour
     {
         return p_teamMate;
     }
-}
+    public List<Item> P_GetItemList()
+    {
+        return p_items;
+    }
+    public void P_SetItemList(List<Item> li)
+    {
+        p_items = li;
+    }
+    public int P_GetItemListSize()
+    {
+        return p_items.Count;
+    }
+    public int P_GetSkill()
+    {
+        return skill;
+    }
+    public void P_SetSkill(int skillV)
+    {
+        skill = skillV;
+    }
+}   
+

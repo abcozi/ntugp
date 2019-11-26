@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class SubCameraController : MonoBehaviour
 {
+	[SerializeField]
+	private Camera subCamera;
     // Start is called before the first frame update
     void Start()
     {
-        transform.position = new Vector3(7.5f, 23.0f, 
+        transform.position = new Vector3(7.5f, 16.0f, 
             7.5f);
         transform.rotation = Quaternion.Euler(90.0f, 0, 0);
     }
@@ -16,5 +18,8 @@ public class SubCameraController : MonoBehaviour
     void LateUpdate()
     {
         
+    }
+    public void UpdatePosition(Vector3 newPos){
+    	subCamera.transform.position = newPos;
     }
 }

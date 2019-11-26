@@ -1,8 +1,16 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
 guid: cb181c681bb92684a86f93eb586b8a24
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
+=======
+guid: 6d7bdb3e5a1c5a048ac11bba55425edd
+folderAsset: yes
+timeCreated: 1461936964
+licenseType: Store
+DefaultImporter:
+>>>>>>> newcozi
   userData: 
   assetBundleName: 
   assetBundleVariant: 

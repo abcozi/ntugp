@@ -108,7 +108,6 @@ public class GameManager : MonoBehaviour
 	{
 		Vector3 location = player.P_GetLocation();
 		int tempActionPoint = player.P_GetActionPoint();
-		Debug.Log("x: "+location.x+", y: "+location.y+", z: "+location.z);
 		//紀錄現在的location
 		if( dir == 0 )
 		{
@@ -135,6 +134,7 @@ public class GameManager : MonoBehaviour
 		//消耗actionpoint
 		player.P_SetLocation( location );
 		//更動Player的Location
+		Debug.Log("x: "+location.x+", y: "+location.y+", z: "+location.z);
 	}
 
 	public void M_RowDice( int num )
@@ -171,7 +171,7 @@ public class GameManager : MonoBehaviour
 		//將要新增的wardLocation新增到temps中
 		player.P_SetWardLocations( temps );
 		//將player的wardlocationlist改成temps
-		M_ChangeWardView( temps );
+		//M_ChangeWardView( temps );
 		//更新視野	
 	}
 
@@ -186,7 +186,7 @@ public class GameManager : MonoBehaviour
 
 	public void M_ChangeWardView( List<Vector3> inputs )
 	{
-		int[,] temp = new int [25,25];
+		int[,] temp = new int [15,15];
 		foreach( Vector3 input in inputs )
 		{
 			int x = Convert.ToInt32(Math.Round(input.x));
@@ -197,7 +197,7 @@ public class GameManager : MonoBehaviour
             	for(int j = z - 1 ; j <= z + 1 ; j ++)
             	{
             	    //忽略超過地圖範圍的點
-            	    if(i >= 0 && j >= 0 && i < 25 && j < 25)
+            	    if(i >= 0 && j >= 0 && i < 15 && j < 15)
             	    {
             	        temp[i, j] = 3;
             	    }

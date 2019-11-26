@@ -29,6 +29,14 @@ public class SetSliderMaxValue : MonoBehaviour
     void Update()
     {
         //將slider max value 更新為player 目前擁有的骰子量
-        slider.maxValue = player.P_GetDiceAmount();
+        //slider.maxValue = player.P_GetDiceAmount();
+        if(player.P_GetDiceAmount() < 3)
+        {
+            slider.maxValue = player.P_GetDiceAmount();
+        }
+        else
+        {
+            slider.maxValue = 3;
+        }
     }
 }
