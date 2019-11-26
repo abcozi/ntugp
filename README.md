@@ -2,6 +2,9 @@
 NTU game programming project
 
 ## Updates:
+- 191126 ver:
+  - merge道具地圖、minimap、回合 三個版本
+  - To Be Fixed: 不能點選地塊
 - 191124 ver:
   - 四玩家地圖一致
   - 地形完成
