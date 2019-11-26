@@ -42,5 +42,9 @@ MonoBehaviour:
   - TeamRoundUpdate
   - changePLayerVisibilityInMinimap
   - HideOrShowCharacter
+  - UpdateFetchBarrenMap
+  - UpdateItemOnMap
+  - UpdateStepOnTheTrapMap
+  - TimeUpdate
   DisableAutoOpenWizard: 1
   ShowSettings: 0

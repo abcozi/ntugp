@@ -79,4 +79,9 @@ public class RPC : MonoBehaviour
         	child.gameObject.layer = LayerMask.NameToLayer(layerName);
         }
 	}
+	[PunRPC]
+	void TimeUpdate( float time )
+	{
+		PhotonNetwork.LocalPlayer.CustomProperties["tempTime"] = time;
+	}
 }

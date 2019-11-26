@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
 	private int M_roundtime;
 	public static GameManager gameManager;
 	public GameObject diceSliderPanel;
-	public GameObject actionPointPanel;
+	//public GameObject actionPointPanel;
 	private Player player;
 	private int roundstate = 0;
 	private int itemfetching = 0;
@@ -55,7 +55,7 @@ public class GameManager : MonoBehaviour
 	    	if( teamRound == player.P_GetTeam() )
 	    	{
 	    		diceSliderPanel.SetActive( false );
-	    		actionPointPanel.SetActive( true );
+	    		//actionPointPanel.SetActive( true );
 	    		player.P_RowDice(1);
 	    	}
 	    }
@@ -99,7 +99,7 @@ public class GameManager : MonoBehaviour
 		{
 			//not my team's round
 			player.P_SetActionPoint(0);
-			actionPointPanel.SetActive(false);
+			//actionPointPanel.SetActive(false);
 			Debug.Log("not my team's round");
 		}
 	}
