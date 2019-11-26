@@ -22,4 +22,6 @@ public class FetchItemBtn : MonoBehaviour, IPointerDownHandler
     {
         FetchItemBtn.clicked = clicked;
     }
+
+    
 }
