@@ -17,8 +17,8 @@ public class ItemInfo : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     }
    
-    // Start is called before the first frame update
-    void Start()
+
+    void Awake()
     {
         map = GameObject.Find("Map").GetComponent<Map>(); 
     }
@@ -26,7 +26,8 @@ public class ItemInfo : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     // Update is called once per frame
     void Update()
     {
-        
+        if (map == null)
+            map = GameObject.Find("Map").GetComponent<Map>();
     }
 }
 

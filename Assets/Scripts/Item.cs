@@ -6,7 +6,7 @@ public class Item : MonoBehaviour
 {
     private static int purplePossibility = 5, bluePossibility = 10, greenPossibility = 35, whitePossibility = 50;
     private static int purpleStorePossibility = 50, blueStorePossibility = 35, greenStorePossibility = 10, whiteStorePossibility = 5;
-    private int price;
+    private int price, times;
 	private string id, itemName, resourceName, description, level;
 	
 	public Item()
@@ -18,7 +18,7 @@ public class Item : MonoBehaviour
         level = "";
 
     }
-	public Item(string id, string name, string resourceName, string description, string level, int price)
+	public Item(string id, string name, string resourceName, string description, string level, int price, int times)
 	{
         this.id = id;
         this.itemName = name;
@@ -26,8 +26,9 @@ public class Item : MonoBehaviour
         this.description = description;
         this.level = level;
         this.price = price;
+        this.times = times;
     }
-    public string GetId()
+    public string GetID()
     {
         return id;
     }
@@ -74,6 +75,14 @@ public class Item : MonoBehaviour
     public void SetPrice(int price)
     {
         this.price = price;
+    }
+    public int GetTimes()
+    {
+        return times;
+    }
+    public void SetTimes(int times)
+    {
+        this.times = times;
     }
     public static int GetPurplePossibility()
     {

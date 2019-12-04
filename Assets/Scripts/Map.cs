@@ -508,6 +508,10 @@ public class Map : MonoBehaviour
             ChooseItemToDiscard();
         }
 
+        if(player.P_GetItemListSize() == 0)
+        {
+            PauseArbitrarilyDisCard();
+        }
     }
     [PunRPC]
     private void UpdatePortalStatus(int playerLocationI, int playerLocationJ, int transferI, int transferJ)
@@ -515,7 +519,10 @@ public class Map : MonoBehaviour
         portalRecoverRound.Add(playerLocationI.ToString() + "," + playerLocationJ.ToString(), 5);
         portalRecoverRound.Add(transferI.ToString() + "," + transferJ.ToString(), 5);
     }
-
+    public List<Item> S_GetItemList()
+    {
+        return itemList;
+    }
     /*
      purpose:取得i row j col的地形
      */
@@ -604,24 +611,28 @@ public class Map : MonoBehaviour
                 {
                     randomResult = Random.Range(0, purpleItemList.Count);
                     player.P_AddItem(purpleItemList[randomResult]);
+                    player.P_AddItemTimes(purpleItemList[randomResult].GetTimes());
                     gameManager.M_ShowInfo("採集到 : " + purpleItemList[randomResult].GetName());
                 }
                 else if (randomResult > Item.GetPurplePossibility() && randomResult < Item.GetPurplePossibility() + Item.GetBluePossibility())
                 {
                     randomResult = Random.Range(0, blueItemList.Count);
                     player.P_AddItem(blueItemList[randomResult]);
+                    player.P_AddItemTimes(blueItemList[randomResult].GetTimes());
                     gameManager.M_ShowInfo("採集到 : " + blueItemList[randomResult].GetName());
                 }
                 else if (randomResult >= (Item.GetPurplePossibility() + Item.GetBluePossibility()) && randomResult < (Item.GetPurplePossibility() + Item.GetBluePossibility() + Item.GetGreenPossibility()))
                 {
                     randomResult = Random.Range(0, greenItemList.Count);
                     player.P_AddItem(greenItemList[randomResult]);
+                    player.P_AddItemTimes(greenItemList[randomResult].GetTimes());
                     gameManager.M_ShowInfo("採集到 : " + greenItemList[randomResult].GetName());
                 }
                 else if (randomResult >= (Item.GetPurplePossibility() + Item.GetBluePossibility() + Item.GetGreenPossibility()))
                 {
                     randomResult = Random.Range(0, whiteItemList.Count);
                     player.P_AddItem(whiteItemList[randomResult]);
+                    player.P_AddItemTimes(whiteItemList[randomResult].GetTimes());
                     gameManager.M_ShowInfo("採集到 : " + whiteItemList[randomResult].GetName());
                 }
 
@@ -661,6 +672,7 @@ public class Map : MonoBehaviour
     {
 
         player.P_AddItem(itemGrid[i, j]);
+        player.P_AddItemTimes(itemGrid[i, j].GetTimes());
         gameManager.M_ShowInfo("拾取 : " + itemGrid[i, j].GetName());
         photonView.RPC("UpdateItemOnMap", RpcTarget.All, i, j);
     }
@@ -742,24 +754,28 @@ public class Map : MonoBehaviour
                     {
                         randomResult = Random.Range(0, purpleItemList.Count);
                         player.P_AddItem(purpleItemList[randomResult]);
+                        player.P_AddItemTimes(purpleItemList[randomResult].GetTimes());
                         gameManager.M_ShowInfo("取得樹上掉落的 : " + purpleItemList[randomResult].GetName());
                     }
                     else if (randomResult > Item.GetPurplePossibility() && randomResult < Item.GetPurplePossibility() + Item.GetBluePossibility())
                     {
                         randomResult = Random.Range(0, blueItemList.Count);
                         player.P_AddItem(blueItemList[randomResult]);
+                        player.P_AddItemTimes(blueItemList[randomResult].GetTimes());
                         gameManager.M_ShowInfo("取得樹上掉落的 : " + blueItemList[randomResult].GetName());
                     }
                     else if (randomResult >= (Item.GetPurplePossibility() + Item.GetBluePossibility()) && randomResult < (Item.GetPurplePossibility() + Item.GetBluePossibility() + Item.GetGreenPossibility()))
                     {
                         randomResult = Random.Range(0, greenItemList.Count);
                         player.P_AddItem(greenItemList[randomResult]);
+                        player.P_AddItemTimes(greenItemList[randomResult].GetTimes());
                         gameManager.M_ShowInfo("取得樹上掉落的 : " + greenItemList[randomResult].GetName());
                     }
                     else if (randomResult >= (Item.GetPurplePossibility() + Item.GetBluePossibility() + Item.GetGreenPossibility()))
                     {
                         randomResult = Random.Range(0, whiteItemList.Count);
                         player.P_AddItem(whiteItemList[randomResult]);
+                        player.P_AddItemTimes(whiteItemList[randomResult].GetTimes());
                         gameManager.M_ShowInfo("取得樹上掉落的 : " + whiteItemList[randomResult].GetName());
                     }
                 }
@@ -1065,6 +1081,7 @@ public class Map : MonoBehaviour
                 if (i.GetName() == storeItemObj[itemNum - 1].transform.Find("ItemName" + itemNum.ToString()).GetComponent<Text>().text.ToString())
                 {
                     player.P_AddItem(i);
+                    player.P_AddItemTimes(i.GetTimes());
                     gameManager.M_ShowInfo("成功購買" + i.GetName(), 1);
                 }
             }
@@ -1165,32 +1182,32 @@ public class Map : MonoBehaviour
     //初始化道具
     private void InitItem()
     {
-        purpleA = new Item("purpleA", "PurpleA", "PurpleA", "可使用一次，兩回合內攻擊力提升10點，可疊加。", "purple", 5);
-        purpleB = new Item("purpleB", "PurpleB", "PurpleB", "可使用一次，兩回合內防禦力提升10點，可疊加。", "purple", 5);
-        purpleC = new Item("purpleC", "PurpleC", "PurpleC", "可使用一次，永久使攻擊力提升5點，可疊加。", "purple", 5);
-        purpleD = new Item("purpleD", "PurpleD", "PurpleD", "可使用一次，永久使防禦力提升5點，可疊加。", "purple", 5);
-        purpleE = new Item("purpleE", "PurpleE", "PurpleE", "存在於背包中即有效果，可以向當前面對方向增加一格視野距離，不可疊加。", "purple", 5);
-        purpleF = new Item("purpleF", "PurpleF", "PurpleF", "可使用一次，將該回合可用的行動點數變為三倍。", "purple", 5);
+        purpleA = new Item("purpleA", "PurpleA", "PurpleA", "可使用一次，兩回合內攻擊力提升10點，可疊加。", "purple", 5, 1);
+        purpleB = new Item("purpleB", "PurpleB", "PurpleB", "可使用一次，兩回合內防禦力提升10點，可疊加。", "purple", 5, 1);
+        purpleC = new Item("purpleC", "PurpleC", "PurpleC", "可使用一次，永久使攻擊力提升5點，可疊加。", "purple", 5, 1);
+        purpleD = new Item("purpleD", "PurpleD", "PurpleD", "可使用一次，永久使防禦力提升5點，可疊加。", "purple", 5, 1);
+        purpleE = new Item("purpleE", "PurpleE", "PurpleE", "存在於背包中即有效果，可以向當前面對方向增加一格視野距離，不可疊加。", "purple", 5, 1);
+        purpleF = new Item("purpleF", "PurpleF", "PurpleF", "可使用一次，將該回合可用的行動點數變為三倍。", "purple", 5, 1);
 
-        blueA = new Item("blueA", "BlueA", "BlueA", "可使用一次，三回合內攻擊力提升5點，可疊加。", "blue", 4);
-        blueB = new Item("blueB", "BlueB", "BlueB", "可使用一次，三回合內防禦力提升5點，可疊加。", "blue", 4);
-        blueC = new Item("blueC", "BlueC", "BlueC", "可使用一次，在地上創造傳送門。", "blue", 4);
-        blueD = new Item("blueD", "BlueD", "BlueD", "存在於背包中即有效果，可以藉此道具在水上行動。", "blue", 4);
-        blueE = new Item("blueE", "BlueE", "BlueE", "可使用一次，隨機移動到地圖上任何一個地方。", "blue", 4);
-        blueF = new Item("blueF", "BlueF", "BlueF", "可使用三次，可偵測並清除九宮格範圍之敵對眼。", "blue", 4);
-        blueG = new Item("blueG", "BlueG", "BlueG", "可使用一次，可砍伐樹木。", "blue", 4);
+        blueA = new Item("blueA", "BlueA", "BlueA", "可使用一次，三回合內攻擊力提升5點，可疊加。", "blue", 4, 1);
+        blueB = new Item("blueB", "BlueB", "BlueB", "可使用一次，三回合內防禦力提升5點，可疊加。", "blue", 4, 1);
+        blueC = new Item("blueC", "BlueC", "BlueC", "可使用一次，在地上創造傳送門。", "blue", 4, 1);
+        blueD = new Item("blueD", "BlueD", "BlueD", "存在於背包中即有效果，可以藉此道具在水上行動。", "blue", 4, 1);
+        blueE = new Item("blueE", "BlueE", "BlueE", "可使用一次，隨機移動到地圖上任何一個地方。", "blue", 4, 1);
+        blueF = new Item("blueF", "BlueF", "BlueF", "可使用三次，可偵測並清除九宮格範圍之敵對眼。", "blue", 4, 3);
+        blueG = new Item("blueG", "BlueG", "BlueG", "可使用一次，可砍伐樹木。", "blue", 4, 1);
 
-        greenA = new Item("greenA", "GreenA", "GreenA", "可使用一次，永久使攻擊力提升1點，可疊加。", "green", 3);
-        greenB = new Item("greenB", "GreenB", "GreenB", "可使用一次，永久使攻擊力提升2點，可疊加。", "green", 3);
-        greenC = new Item("greenC", "GreenC", "GreenC", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3);
-        greenD = new Item("greenD", "GreenD", "GreenD", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3);
-        greenE = new Item("greenE", "GreenE", "GreenE", "可使用一次，清除九宮格範圍內所有敵對眼。", "green", 3);
+        greenA = new Item("greenA", "GreenA", "GreenA", "可使用一次，永久使攻擊力提升1點，可疊加。", "green", 3, 1);
+        greenB = new Item("greenB", "GreenB", "GreenB", "可使用一次，永久使攻擊力提升2點，可疊加。", "green", 3, 1);
+        greenC = new Item("greenC", "GreenC", "GreenC", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3, 1);
+        greenD = new Item("greenD", "GreenD", "GreenD", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3, 1);
+        greenE = new Item("greenE", "GreenE", "GreenE", "可使用一次，清除九宮格範圍內所有敵對眼。", "green", 3, 1);
 
-        whiteA = new Item("whiteA", "WhiteA", "WhiteA", "可使用一次，三回合內攻擊力提升2點，可疊加。", "green", 2);
-        whiteB = new Item("whiteB", "WhiteB", "WhiteB", "可使用一次，二回合內防禦力提升3點，可疊加。", "green", 2);
-        whiteC = new Item("whiteC", "WhiteC", "WhiteC", "可使用一次，此回合可以向當前面對方向增加一格視野距離。", "green", 2);
-        whiteD = new Item("whiteD", "WhiteD", "WhiteD", "可使用一次，可使用一次，可得九宮格範圍之內是否有眼存在。", "green", 2);
-        whiteE = new Item("whiteE", "WhiteE", "WhiteE", "可使用一次，使該回合行動點數增加三點，可疊加。", "green", 2);
+        whiteA = new Item("whiteA", "WhiteA", "WhiteA", "可使用一次，三回合內攻擊力提升2點，可疊加。", "green", 2, 1);
+        whiteB = new Item("whiteB", "WhiteB", "WhiteB", "可使用一次，二回合內防禦力提升3點，可疊加。", "green", 2, 1);
+        whiteC = new Item("whiteC", "WhiteC", "WhiteC", "可使用一次，此回合可以向當前面對方向增加一格視野距離。", "green", 2, 1);
+        whiteD = new Item("whiteD", "WhiteD", "WhiteD", "可使用一次，可使用一次，可得九宮格範圍之內是否有眼存在。", "green", 2, 1);
+        whiteE = new Item("whiteE", "WhiteE", "WhiteE", "可使用一次，使該回合行動點數增加三點，可疊加。", "green", 2, 1);
 
 
     }
@@ -2210,7 +2227,15 @@ public class Map : MonoBehaviour
                     }
                 }
             }
-            if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1 && !player.P_GetItemList().Contains(blueD))
+            bool containBoat = false;
+            foreach(Item i in player.P_GetItemList())
+            {
+                if (i.GetID() == "blueD")
+                {
+                    containBoat = true;
+                }
+            }
+            if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1 && !containBoat)
             {
                 player.P_SetMoveLock(true);
             }
@@ -2262,7 +2287,15 @@ public class Map : MonoBehaviour
                     }
                 }
             }
-            if (waterGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1 && !player.P_GetItemList().Contains(blueD)) {
+            bool containBoat = false;
+            foreach (Item i in player.P_GetItemList())
+            {
+                if (i.GetID() == "blueD")
+                {
+                    containBoat = true;
+                }
+            }
+            if (waterGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1 && !containBoat) {
                 player.P_SetMoveLock(true);
             }
         }
@@ -2312,7 +2345,15 @@ public class Map : MonoBehaviour
                     }
                 }
             }
-            if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1 && !player.P_GetItemList().Contains(blueD))
+            bool containBoat = false;
+            foreach (Item i in player.P_GetItemList())
+            {
+                if (i.GetID() == "blueD")
+                {
+                    containBoat = true;
+                }
+            }
+            if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1 && !containBoat)
             {
                 player.P_SetMoveLock(true);
             }
@@ -2363,7 +2404,15 @@ public class Map : MonoBehaviour
                     }
                 }
             }
-            if (waterGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1 && !player.P_GetItemList().Contains(blueD))
+            bool containBoat = false;
+            foreach (Item i in player.P_GetItemList())
+            {
+                if (i.GetID() == "blueD")
+                {
+                    containBoat = true;
+                }
+            }
+            if (waterGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1 && !containBoat)
             {
                 player.P_SetMoveLock(true);
             }
@@ -2462,20 +2511,30 @@ public class Map : MonoBehaviour
                 itemName = i.GetName();
             }
         }
-        if (isArbitrarilyDiscard)
+        if(resourceName == "BlueD" && waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z] == 1)
+        {
+            gameManager.M_ShowInfo("目前狀態無法丟棄該道具");
+        }
+        else if (isArbitrarilyDiscard)
         {
             if (itemImage.transform.parent.name.Substring(12) == "Extra")
             {
                 List<Item> temp = player.P_GetItemList();
+                List<int> tempTimes = player.P_GetItemTimesList();
                 temp.RemoveAt(player.P_GetItemList().Count - 1);
+                tempTimes.RemoveAt(player.P_GetItemList().Count - 1);
                 player.P_SetItemList(temp);
+                player.P_SetItemTimesList(tempTimes);
             }
             else
             {
                 int removeNum = int.Parse(itemImage.transform.parent.name.Substring(12));
                 List<Item> temp = player.P_GetItemList();
+                List<int> tempTimes = player.P_GetItemTimesList();
                 temp.RemoveAt(removeNum - 1);
+                tempTimes.RemoveAt(removeNum - 1);
                 player.P_SetItemList(temp);
+                player.P_SetItemTimesList(tempTimes);
             }
             CloseItemInfo();
             S_ResetCursor();
@@ -2500,15 +2559,21 @@ public class Map : MonoBehaviour
                     if (itemImage.transform.parent.name.Substring(12) == "Extra")
                     {
                         List<Item> temp = player.P_GetItemList();
+                        List<int> tempTimes = player.P_GetItemTimesList();
                         temp.RemoveAt(player.P_GetItemList().Count - 1);
+                        tempTimes.RemoveAt(player.P_GetItemList().Count - 1);
                         player.P_SetItemList(temp);
+                        player.P_SetItemTimesList(tempTimes);
                     }
                     else
                     {
                         int removeNum = int.Parse(itemImage.transform.parent.name.Substring(12));
                         List<Item> temp = player.P_GetItemList();
+                        List<int> tempTimes = player.P_GetItemTimesList();
                         temp.RemoveAt(removeNum - 1);
+                        tempTimes.RemoveAt(removeNum - 1);
                         player.P_SetItemList(temp);
+                        player.P_SetItemTimesList(tempTimes);
                     }
                     isChoosingItemToDiscard = false;
                     bagPanel.SetActive(false);
@@ -2532,12 +2597,16 @@ public class Map : MonoBehaviour
     }
     public void ArbitrarilyDisCard()
     {
+        bagPanel.transform.Find("BagText").gameObject.SetActive(false);
+        bagPanel.transform.Find("DiscardText").gameObject.SetActive(true);
         isArbitrarilyDiscard = true;
         bagPanel.transform.Find("DiscardBtn").gameObject.SetActive(false);
         bagPanel.transform.Find("CancelDiscardBtn").gameObject.SetActive(true);
     }
     public void PauseArbitrarilyDisCard()
     {
+        bagPanel.transform.Find("BagText").gameObject.SetActive(true);
+        bagPanel.transform.Find("DiscardText").gameObject.SetActive(false);
         isArbitrarilyDiscard = false;
         bagPanel.transform.Find("DiscardBtn").gameObject.SetActive(true);
         bagPanel.transform.Find("CancelDiscardBtn").gameObject.SetActive(false);

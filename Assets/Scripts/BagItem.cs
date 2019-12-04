@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Photon.Pun;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -14,6 +15,10 @@ public class BagItem : MonoBehaviour, IDragHandler, IDropHandler, IPointerDownHa
     private int playerID = 0;
     private Map map;
     private Vector2 position;
+    private GameObject itemInfoCanvas, itemInfoPanel;
+    private string  resourceName;
+    int number, times;
+
 
 
     public static bool Click { get; set; }
@@ -53,8 +58,13 @@ public class BagItem : MonoBehaviour, IDragHandler, IDropHandler, IPointerDownHa
     }
     void Awake()
     {
+        resourceName = GetComponent<RawImage>().texture.name.ToString();
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         map = GameObject.Find("Map").GetComponent<Map>();
+        itemInfoCanvas = GameObject.Find("ItemInfoCanvas").gameObject;
+        itemInfoPanel = itemInfoCanvas.transform.Find("ItemInfoPanel").gameObject;
+        playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
+        player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
     }
 
     // Start is called before the first frame update
@@ -73,6 +83,17 @@ public class BagItem : MonoBehaviour, IDragHandler, IDropHandler, IPointerDownHa
             gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         if(map == null)
             map = GameObject.Find("Map").GetComponent<Map>();
+ 
+        if (itemInfoCanvas == null)
+        {
+            itemInfoCanvas = GameObject.Find("ItemInfoCanvas").gameObject;
+            itemInfoPanel = itemInfoCanvas.transform.Find("ItemInfoPanel").gameObject;
+        }  
+        if(player == null)
+        {
+            playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
+            player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -88,7 +109,16 @@ public class BagItem : MonoBehaviour, IDragHandler, IDropHandler, IPointerDownHa
             hotSpot = new Vector2(0, texture.height / 3);
             Cursor.SetCursor(selectTexture, hotSpot, cursorMode);
         }
+        if (transform.parent.name.Substring(12) != "Extra")
+        {
+            number = int.Parse(transform.parent.name.Substring(12));
+            times = player.P_GetItemTimesList()[number - 1];
+            if (times > 1 || player.P_GetItemList()[number - 1].GetTimes() > 1)
+                itemInfoPanel.transform.GetChild(1).Find("ItemInfoText").gameObject.GetComponent<Text>().text += "\n\n 可用次數:" + times;
+        }
             
+        
+        
     }
 
     public void OnPointerExit(PointerEventData eventData)

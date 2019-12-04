@@ -23,7 +23,8 @@ public class Player : MonoBehaviour
 	private int p_id;//player id
     private string p_nickName;
 	private List<Item> p_items = new List<Item>();//item list of a player
-	private int p_diceAmount = 40;//amount of player's dices
+    private List<int> p_itemsTimes = new List<int>();//the times item could be used list of a player
+    private int p_diceAmount = 40;//amount of player's dices
 	private int p_attack = 4; //attack value of a player
     private int p_defense = 3;
     private int p_itemAmountMax = 6;
@@ -417,9 +418,21 @@ public class Player : MonoBehaviour
     {
         p_items = li;
     }
+    public List<int> P_GetItemTimesList()
+    {
+        return p_itemsTimes;
+    }
+    public void P_SetItemTimesList(List<int> li)
+    {
+        p_itemsTimes = li;
+    }
     public void P_AddItem(Item item)
     {
         p_items.Add(item);
+    }
+    public void P_AddItemTimes(int times)
+    {
+        p_itemsTimes.Add(times);
     }
     public int P_GetItemListSize()
     {
