@@ -6,6 +6,7 @@ using System.IO;
 using System;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Reflection;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameManager : MonoBehaviour
@@ -23,20 +24,35 @@ public class GameManager : MonoBehaviour
 	private int playerTeam = 0;
 	private int playerTeamMate = 0;
 	private int teamRound = 1;
+    private int infoNum = 0, infoCloseNum = 0;
 	private PhotonView photonView;
+    private Map map;
+    private GameObject infoText, infoImage, infoBackGroundPanel, infoCanvas;
 
-	void Awake()
+
+    
+
+    void Awake()
 	{
 		if( gameManager == null )
 		{
 			gameManager = this;
 		}
-		playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
+        if (infoCanvas == null)
+        {
+            infoCanvas = GameObject.Find("InfoCanvas").gameObject;
+            infoText = infoCanvas.transform.GetChild(0).GetChild(0).Find("InfoText").gameObject;
+            infoImage = infoCanvas.transform.GetChild(0).GetChild(0).Find("Image").gameObject;
+            infoBackGroundPanel = infoCanvas.transform.Find("InfoBackGroundPanel").gameObject;
+        }
+       
+        playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
 		player = GameObject.Find("Player"+playerID.ToString()).GetComponent<Player>();
 		playerTeam = player.P_GetTeam();
 		playerTeamMate = player.P_GetTeamMate();
 		photonView = GetComponent<PhotonView>();
-	}
+        map = GameObject.Find("Map").GetComponent<Map>();
+    }
 	float tempTime = 0;
 	void Update ()
 	{
@@ -76,6 +92,7 @@ public class GameManager : MonoBehaviour
 	{
 		if(PhotonNetwork.IsMasterClient)
 		{
+            round++;
 			if(teamRound == 1)
 			{
 				Debug.Log("change teamRound to 2");
@@ -216,5 +233,196 @@ public class GameManager : MonoBehaviour
     {
         return round;
     }
+    /*
+     *purpose:顯示通知(提醒) 
+     * param:info:通知內容 time:通知時間 warning:是否為警告(否則為一般提醒)
+    */
+    public void M_ShowInfo(string info, float time = 2, bool warning = false)
+    {
+        infoNum++;
+        if (warning)
+        {
+            Sprite temp = Resources.Load<Sprite>("Icon/warning");
+            infoImage.GetComponent<Image>().sprite = temp;
+            infoBackGroundPanel.GetComponent<Image>().color = new Color32(239, 92, 0, 255);
 
+        }
+        else
+        {
+            Sprite temp = Resources.Load<Sprite>("Icon/info");
+            infoImage.GetComponent<Image>().sprite = temp;
+            infoBackGroundPanel.GetComponent<Image>().color = new Color32(208, 245, 145, 255);
+        }
+        infoText.GetComponent<Text>().text = " " + info;
+        infoBackGroundPanel.SetActive(true);
+        StartCoroutine(ShowInfoTime());
+        IEnumerator ShowInfoTime()
+        {
+            yield return new WaitForSeconds(time);
+            infoCloseNum++;
+            if (infoNum == infoCloseNum)
+                infoBackGroundPanel.SetActive(false);
+        }
+    }
+    /*
+    *purpose:使用技能
+    * param:itemID:道具名稱
+    */
+    public void M_UsingItem(string itemID, int removeID)
+    {
+        bool itemRemove = true;
+        switch (itemID)
+        {
+            case "purpleA"://可使用一次，兩回合內攻擊力提升10點，可疊加。	
+
+
+                break;
+
+            case "purpleB"://可使用一次，兩回合內防禦力提升10點，可疊加
+
+
+                break;
+
+            case "purpleC"://可使用一次，永久使攻擊力提升5點，可疊加。
+
+                break;
+
+            case "purpleD"://可使用一次，永久使防禦力提升5點，可疊加。
+
+
+                break;
+
+            case "purpleE"://存在於背包中即有效果，可以向當前面對方向增加一格視野
+
+                M_ShowInfo("不需要使用，存在於背包中即有效果。", 1);
+                itemRemove = false;
+                break;
+
+            case "purpleF"://可使用一次，將該回合可用的行動點數變為三倍。
+
+
+                break;
+
+            case "blueA"://可使用一次，三回合內攻擊力提升5點，可疊加。
+
+                break;
+
+            case "blueB"://可使用一次，三回合內防禦力提升5點，可疊加。
+
+                break;
+
+            case "blueC"://可使用一次，在地上創造傳送門。
+                if (!player.P_GetMoveLock() && player.P_GetActionPoint() != 0)
+                {
+                    if (!map.S_CreatePortal())
+                        itemRemove = false;
+                }           
+                else
+                {
+                    M_ShowInfo("目前的狀態無法使用該道具", 1);
+                    itemRemove = false;
+                }
+
+                break;
+
+            case "blueD"://存在於背包中即有效果，可以藉此道具在水上行動。
+
+                M_ShowInfo("不需要使用，存在於背包中即有效果。", 1);
+                itemRemove = false;
+                break;
+
+            case "blueE"://可使用一次，隨機移動到地圖上任何一個地方。
+
+                if (!player.P_GetMoveLock() && player.P_GetActionPoint() != 0)
+                    map.S_RandomTransfer();
+                else
+                {
+                    M_ShowInfo("目前的狀態無法使用該道具", 1);
+                    itemRemove = false;
+                }
+                    
+
+                break;
+
+            case "blueF"://可使用三次，可偵測並清除九宮格範圍之敵對眼。
+
+                break;
+
+            case "blueG"://可使用一次，可砍伐樹木。
+                if (!player.P_GetMoveLock() && player.P_GetActionPoint() !=0)
+                {
+                    if (!map.S_ChopTheTree())
+                        itemRemove = false;
+                }
+                else
+                {
+                    M_ShowInfo("目前的狀態無法使用該道具", 1);
+                    itemRemove = false;
+                }
+
+                break;
+
+            case "greenA"://可使用一次，永久使攻擊力提升1點，可疊加。
+
+
+                break;
+
+            case "greenB"://可使用一次，永久使攻擊力提升2點，可疊加。
+
+
+                break;
+
+            case "greenC"://可使用一次，永久使防禦力提升1點，可疊加。
+
+                break;
+
+            case "greenD"://可使用一次，永久使防禦力提升2點，可疊加。
+
+
+                break;
+
+            case "greenE"://可使用一次，清除九宮格範圍內所有敵對眼。
+
+                break;
+
+            case "whiteA"://可使用一次，三回合內攻擊力提升2點，可疊加。
+
+                break;
+
+            case "whiteB"://可使用一次，二回合內防禦力提升3點，可疊加。
+
+
+                break;
+
+            case "whiteC"://可使用一次，此回合可以向當前面對方向增加一格視野距離。
+
+
+                break;
+
+            case "whiteD"://可使用一次，可得九宮格範圍之內是否有眼存在。
+
+
+                break;
+
+            case "whiteE"://可使用一次，使該回合行動點數增加三點，可疊加。
+
+
+                break;
+
+            default:
+
+                Debug.LogError("道具參數有誤或是未包含全部道具的實作");
+                break;
+
+        }
+        //道具使用成功則從背包中移除
+        if (itemRemove)
+        {
+            List<Item> tempList = player.P_GetItemList();
+            tempList.RemoveAt(removeID);
+            player.P_SetItemList(tempList);
+            map.CloseItemInfo();
+            map.S_ResetCursor();
+        }
+    }
 }

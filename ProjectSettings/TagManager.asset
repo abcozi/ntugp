@@ -6,6 +6,17 @@ TagManager:
   tags:
   - Fire
   - Bullet
+  - ItemOnMap
+  - Grass Normal
+  - Barren
+  - 1
+  - 2
+  - 3
+  - 4
+  - Reed
+  - Trap
+  - Portal
+  - BagPanel
   layers:
   - Default
   - TransparentFX

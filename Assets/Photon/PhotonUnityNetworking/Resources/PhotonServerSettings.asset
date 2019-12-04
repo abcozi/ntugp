@@ -46,5 +46,23 @@ MonoBehaviour:
   - UpdateItemOnMap
   - UpdateStepOnTheTrapMap
   - TimeUpdate
+  - SetSeed
+  - ItemSoldOut
+  - UpdatePlayersLocation
+  - UpdatePlayers
+  - BeSearched
+  - BeSearchedUpdateView
+  - HideUpdateView
+  - ShowUpUpdateView
+  - InitPlayers
+  - UpdateTreeMap
+  - UpdateRecoverTheTrapMap
+  - CreateUpdatePortalMap
+  - DestroyUpdatePortalMap
+  - UpdateFetchBarrenVariable
+  - UpdateTreeVariable
+  - SetChopTreeLock
+  - UpdatePortalStatus
+  - SetFetchItemLock
   DisableAutoOpenWizard: 1
   ShowSettings: 0

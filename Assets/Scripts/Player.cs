@@ -49,6 +49,7 @@ public class Player : MonoBehaviour
     private GameObject playerObj;
     private int skill;
     private int order;//random order among players
+    private bool moveLock = false;//if lock is true, player cannot move by user
     /*  
         skill
         1.每三回合可以額外使用一顆免費骰子 
@@ -149,9 +150,9 @@ public class Player : MonoBehaviour
         else
         {
             Debug.Log("not my photonView, id: "+photonView.ViewID.ToString()+", owner: "+photonView.Owner.NickName);
-        }
+        } 
     	//update movement in every frame if p_actionPoint > 0
-    	if(p_actionPoint > 0 && p_movingMode)
+    	if(p_actionPoint > 0 && p_movingMode && !moveLock)
     	{
             //Animator plays "walk" animation at the beggining of a frame.
             //After walk animation, go back to wait.
@@ -416,6 +417,10 @@ public class Player : MonoBehaviour
     {
         p_items = li;
     }
+    public void P_AddItem(Item item)
+    {
+        p_items.Add(item);
+    }
     public int P_GetItemListSize()
     {
         return p_items.Count;
@@ -427,6 +432,14 @@ public class Player : MonoBehaviour
     public void P_SetSkill(int skillV)
     {
         skill = skillV;
+    }
+    public bool P_GetMoveLock()
+    {
+        return moveLock;
+    }
+    public void P_SetMoveLock(bool moveLock)
+    {
+        this.moveLock = moveLock;
     }
 }   
 
