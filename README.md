@@ -2,6 +2,11 @@
 NTU game programming project
 
 ## Updates:
+- 191204 ver:
+  - 完成的:商店、背包、玩家使用或隨意或背包已滿而丟棄道具、道具的model & icon與部分功能(道具回合效果、使用次數)
+    、地圖互動功能與同步(砍樹、划船、傳送門(破壞與設置)、陷阱(觸發與重設)、水坑與藏匿)
+    人物行走限制(特定地形才能行走)、滑鼠游標提示、提示功能、confirm box
+  - 待完成:道具的功用是關於眼的(掃眼、除眼)
 - 191126 ver:
   - merge道具地圖、minimap、回合 三個版本
   - To Be Fixed: 不能點選地塊
@@ -13,7 +18,7 @@ NTU game programming project
   - 傳送門、陷阱功能完成
 - 191123 ver:
   - minimap雛形
-  - Scenes 排版整理(Scroll with screen size)
+  - Scenes 排版整理(Scroll with scre1en size)
 - 191121 ver:
   - 回合制改善
 - 191118 ver:
