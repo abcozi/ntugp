@@ -29481,7 +29481,7 @@ PrefabInstance:
     - target: {fileID: 1752264359512411693, guid: 8b018d2c231f99441839030260d1bee8,
         type: 3}
       propertyPath: m_SortingOrder
-      value: 7
+      value: 87
       objectReference: {fileID: 0}
     - target: {fileID: 1752264359512411693, guid: 8b018d2c231f99441839030260d1bee8,
         type: 3}
@@ -64296,6 +64296,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1117635088872844306, guid: c64105ae848546a45aac35e3563c0424,
+        type: 3}
+      propertyPath: m_SortingOrder
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c64105ae848546a45aac35e3563c0424, type: 3}
