@@ -16,6 +16,7 @@ public class CharacterSetterController : MonoBehaviour
 	[SerializeField]
 	private GameObject playGameButton;
 	public int gameSceneIndex = 5;
+	bool started = false;
 	
 	PhotonView MyPhotonView;
     // Start is called before the first frame update
@@ -80,7 +81,12 @@ public class CharacterSetterController : MonoBehaviour
         Debug.Log("PlayGame clicked");
         if(PhotonNetwork.IsMasterClient)
         {
-            PhotonNetwork.LoadLevel(gameSceneIndex);
+            if(!started)
+            {
+	            Debug.Log("Load level");
+            	PhotonNetwork.LoadLevel(gameSceneIndex);
+            	started = true;
+            }
         }
     }
 }

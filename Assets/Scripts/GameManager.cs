@@ -30,9 +30,13 @@ public class GameManager : MonoBehaviour
     private GameObject infoText, infoImage, infoBackGroundPanel, infoCanvas;
     private List<Tuple<string, int>> itemEffectRound;
     private int roundPre;
+    [SerializeField]
+    private Text timerText;
+    [SerializeField]
+    private Text roundText;
+    private List<GameObject> playerImgs = new List<GameObject>();
 
-
-
+    float tempTime = 0;
 
     void Awake()
     {
@@ -47,97 +51,430 @@ public class GameManager : MonoBehaviour
             infoImage = infoCanvas.transform.GetChild(0).GetChild(0).Find("Image").gameObject;
             infoBackGroundPanel = infoCanvas.transform.Find("InfoBackGroundPanel").gameObject;
         }
-
         playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
-        player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
+        player = GameObject.Find("Player"+playerID.ToString()).GetComponent<Player>();
         playerTeam = player.P_GetTeam();
         playerTeamMate = player.P_GetTeamMate();
         photonView = GetComponent<PhotonView>();
+
+        //photonView = GetComponent<PhotonView>();
         map = GameObject.Find("Map").GetComponent<Map>();
 
         itemEffectRound = new List<Tuple<string, int>>();
 
         roundPre = round;
+        //Resources.Load<Sprite>("CharacterImgs/dean");
+
+        for(int i = 1 ; i <= 4 ; i ++)
+        {
+            playerImgs.Add(GameObject.Find("player"+i.ToString()+"Img"));
+        }
+        string[] characterNames = new string[]{"alice", "brandon", "charlotte", "dean"};
+        for(int i = 0 ; i < 4 ; i ++)
+        {
+            playerImgs[i].GetComponent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+characterNames[i]);
+        }
+
     }
-    float tempTime = 0;
+    void Start()
+    {
+        
+            playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
+            player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
+            playerTeam = player.P_GetTeam();
+            playerTeamMate = player.P_GetTeamMate();
+            if(PhotonNetwork.IsMasterClient)
+            {
+                //sync "tempTime", "teamRound", "round"
+                photonView.RPC("TimeUpdate", RpcTarget.All, 0.0f);
+                photonView.RPC("TeamRoundUpdate", RpcTarget.All, 1, 1);
+                InvokeRepeating("UpdateTimer", 0.0f, 1.0f);
+                //UpdateTimer();
+            }
+            try
+            {
+                PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"] = player.transform.position;
+                UpdateMinimap();
+            }
+            catch(System.Exception ex)
+            {
+
+            }
+    }
     void Update()
     {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            M_CountingTime();
-        }
-        if (teamRound != player.P_GetTeam())
-        {
-            diceSliderPanel.SetActive(false);
-        }
-        if (roundstate == 0 && tempTime > 10)
-        {
-            tempTime = 0;
-            roundstate = 1;
-            if (teamRound == player.P_GetTeam())
+        
+
+            if(player == null)
             {
-                diceSliderPanel.SetActive(false);
-                //actionPointPanel.SetActive( true );
-                player.P_RowDice(1);
-            }
-        }
-        if (roundstate == 1 && tempTime > 20)
-        {
-            tempTime = 0;
-            roundstate = 0;
-            M_RoundUpdate();
-        }
-        photonView.RPC("TimeUpdate", RpcTarget.All, tempTime);
-
-        if (roundPre != round)
-        {
-            UpdateItemEffectState();
-            roundPre = round;
-        }
-
-    }
-
-    public void M_CountingTime()
-    {
-        tempTime += Time.deltaTime;
-    }
-    public void M_RoundUpdate()
-    {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            round++;
-            if (teamRound == 1)
-            {
-                Debug.Log("change teamRound to 2");
-                teamRound = 2;
+                player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
+                playerTeam = player.P_GetTeam();
+                playerTeamMate = player.P_GetTeamMate();
             }
             else
             {
-                Debug.Log("change teamRound to 1");
-                teamRound = 1;
             }
-            photonView.RPC("TeamRoundUpdate", RpcTarget.All, teamRound);
+            if(playerTeam <= 0)
+            {
+                playerTeam = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
+                playerTeamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
+            }
+            else
+            {
+                
+            }
+            if((float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"] != tempTime)
+            {
+                tempTime = (float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"];
+                round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
+                teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
+                roundstate = (int)PhotonNetwork.LocalPlayer.CustomProperties["roundState"];
+                
+                //update round every 20 secs
+                UpdateRoundState();
+
+                //update item effect state
+                if (roundPre != round)
+                {
+                    UpdateItemEffectState();
+                    roundPre = round;
+                }
+
+                //update minimap
+                UpdateMinimap();
+
+                //master client updates timer
+                //all clients update timer value got from master client
+                //Debug.Log("timer: "+((int)tempTime).ToString());
+                UpdateTimerRoundText();
+            }
+
+        
+    }
+    /*----------------------------  Custom Methods  ---------------------------*/
+    public void UpdateTimerRoundText()
+    {
+        if(round <= 4)
+        {
+            timerText.text = ((int)(80.0f - tempTime)).ToString();
         }
+        else
+        {
+            if(roundstate == 0)
+            {
+                //還沒骰骰子
+                timerText.text = ((int)(10.0f - tempTime)).ToString();
+            }
+            else
+            {
+                timerText.text = ((int)(20.0f - tempTime)).ToString();
+            }
+        }
+        
+        string newRoundText = "回合:"+((int)round).ToString();
         teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
-        if (teamRound == player.P_GetTeam())
+        round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
+        if(round <= 4)
+        {
+            //Debug.Log("my team's round");
+            newRoundText += "\n(進攻)"+teamRound.ToString()+", "+roundstate.ToString();
+        }
+        else if(teamRound == playerTeam)
         {
             //my team's round
-            diceSliderPanel.SetActive(true);
-            Debug.Log("my team's round");
+            //diceSliderPanel.SetActive(true);
+            //Debug.Log("my team's round");
+            player.P_SetActionPoint(0);
+            newRoundText += "\n(進攻)"+teamRound.ToString()+", "+roundstate.ToString();
         }
         else
         {
             //not my team's round
             player.P_SetActionPoint(0);
             //actionPointPanel.SetActive(false);
-            Debug.Log("not my team's round");
+            //Debug.Log("not my team's round");
+            newRoundText += "\n(防守)"+teamRound.ToString()+", "+roundstate.ToString();
         }
+        roundText.text = newRoundText;
+    }
+    
+    public void UpdateRoundState()
+    {
+        //Debug.Log("UpdateRoundState called");
+        if(round <= 4)
+        {
+            if(player.GetUsedDiceAmount() < 12)
+            {
+                //全部都進攻
+                roundstate = 0;//roundstate = 0, 代表可以骰骰子的狀態
+            }
+            else
+            {
+                roundstate = 1;//roundstate = 1, 代表不可以骰骰子的狀態
+            }
+        }
+        else//round > 4
+        {
+            /*roundstate要為0的滿足條件(要同時滿足)：
+                1. tempTime < 10.0f
+                2. 我的進攻回合
+                3. roundstate = 0
+            */
+            if(teamRound == playerTeam)
+            {
+                if(roundstate == 0 && tempTime < 10.0f)
+                {
+                    roundstate = 0;
+                }
+                else if(roundstate == 0 && tempTime >= 10.0f)
+                {
+                    player.P_RowDice(1);
+                    roundstate = 1;
+                }
+                else
+                {
+                    //roundstate == 1
+                    roundstate = 1;
+                }
+            }
+            else
+            {
+                roundstate = 1;
+            }
+        }
+        PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = roundstate;
+        //Debug.Log("roundstate: "+roundstate.ToString());
+    }
+    public void UpdateTimer()
+    {
+        //float newTimerVal = (float)((int)(tempTime + Time.deltaTime*2.0f));
+        float newTimerVal = tempTime + 1.0f;
+        //if((round > 4 && newTimerVal >= 20.0f)||(round <= 4 && newTimerVal >= 80.0f))
+        if((round > 4 && newTimerVal >= 20.0f)||(round <= 4 && ((int)newTimerVal % 20 == 0)))
+        {
+            //Debug.Log("if (int)newTimerVal % 20 : "+((int)newTimerVal % 20).ToString());
+            if((round <= 4 && newTimerVal >= 80.0f)||(round > 4 && newTimerVal >= 20.0f))
+            {
+                newTimerVal = 0.0f;
+            }
+            UpdateRound();
+        }
+        else
+        {
+            //Debug.Log("else (int)newTimerVal % 20 : "+((int)newTimerVal % 20).ToString());
+        }
+        //Debug.Log("new timer: "+newTimerVal.ToString());
+        photonView.RPC("TimeUpdate", RpcTarget.All, newTimerVal);
+    }
+    public void UpdateRound()
+    {
+        if(round < 4)
+        {
+            //Debug.Log("(int)tempTime % 20: "+((int)tempTime % 20).ToString());
+            //Debug.Log("update round and round < 4");
+            round += 1;
+            //Debug.Log("teamroundUpdate to "+round.ToString());
+            photonView.RPC("TeamRoundUpdate", RpcTarget.All, playerTeam, round);
+        }
+        else
+        {
+            round += 1;
+            if(round % 2 == 1)
+            {
+                teamRound = 1;
+            }
+            else
+            {
+                teamRound = 2;
+            }
+            photonView.RPC("TeamRoundUpdate", RpcTarget.All, teamRound, round);
+        }
+    }
+    public void UpdateRoundState_()
+    {
+        tempTime = (float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"];
+        round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
+        teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
+        roundstate = (int)PhotonNetwork.LocalPlayer.CustomProperties["roundState"];
+        if(tempTime == 0)
+        {
+            if (round > 5 && teamRound != playerTeam)
+            {
+                //diceSliderPanel.SetActive(false);
+                roundstate = 1;
+                PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = roundstate;
+            }
+            else{
+                //diceSliderPanel.SetActive(true);
+                roundstate = 0;
+                PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = roundstate;
+            }
+        }
+        else
+        {
+            //0 < tempTime < 20
+            if (roundstate == 0 && tempTime >= 10)
+            {
+                //tempTime = 0;
+                roundstate = 1;
+                PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = roundstate;
+                //if (teamRound == player.P_GetTeam())
+                //{
+                    //diceSliderPanel.SetActive(false);
+                    //actionPointPanel.SetActive( true );
+                    player.P_RowDice(1);
+                //}
+            }
+            else if(roundstate == 0 && tempTime < 10)
+            {
+                //diceSliderPanel.SetActive(true);
+            }
+        }
+        
+        /*
+        if (roundstate == 1 && tempTime > 20)
+        {
+            //tempTime = 0;
+            roundstate = 0;
+            M_RoundUpdate();
+        }*/
+    }
+    public void UpdateTimer_()
+    {
+        tempTime += Time.deltaTime*2.0f;
+        if(tempTime >= 20.0f)
+        {
+            tempTime = 0.0f;
+            //M_RoundUpdate();
+        }
+        photonView.RPC("TimeUpdate", RpcTarget.All, tempTime);
+    }
+    public void UpdateMinimap()
+    {
+        //update minimap
+        //x: -145~-5, y: 5~145
+        //my icon
+        /*
+        int myIconX = -5+((int)player.transform.position.x)*10;
+        int myIconY = 5+((int)player.transform.position.z)*10;
+        if(myIconX < -145)
+        {
+            myIconX = -145;
+        }
+        else if(myIconX > -5)
+        {
+            myIconX = -5;
+        }
+        if(myIconY < 5)
+        {
+            myIconY = 5;
+        }
+        else if(myIconY > 145)
+        {
+            myIconY = 145;
+        }
+        
+        playerImgs[playerID-1].transform.position = new Vector3((float)myIconX, (float)myIconY, 0.0f);
+        */
+
+        //update my position to others
+        photonView.RPC("UpdatePositionToOthers", RpcTarget.All, 
+            (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"],
+            player.transform.position, playerID);
+        
+        //disable other player's icon
+        for(int i = 0 ; i < 4 ; i ++)
+        {
+            if(i+1 == playerID)
+            {
+                //Debug.Log("I appears at "+iconPosToRealPos(playerImgs[i].transform.position));
+                    
+                playerImgs[i].SetActive(true);
+            }
+            else if(i+1 == playerTeamMate)
+            {
+                //team mate
+                if(round >= 5 || player.playerInMyArea(iconPosToRealPos(playerImgs[i].transform.position)))
+                {
+                    //Debug.Log("teammate appears at "+iconPosToRealPos(playerImgs[i].transform.position));
+                    playerImgs[i].SetActive(true);
+                }
+                else
+                {
+                    //Debug.Log("teammate disappeared. "+iconPosToRealPos(playerImgs[i].transform.position));
+                    playerImgs[i].SetActive(false);
+                }
+            }
+            else
+            {
+                //rivals
+                if(player.playerInMyArea(iconPosToRealPos(playerImgs[i].transform.position)))
+                {
+                    //Debug.Log("rival appears at "+iconPosToRealPos(playerImgs[i].transform.position));
+                    
+                    playerImgs[i].SetActive(true);
+                }
+                else
+                {
+                    //Debug.Log("rival disappeared. "+iconPosToRealPos(playerImgs[i].transform.position));
+                    
+                    playerImgs[i].SetActive(false);
+                }
+            }
+        }
+    }
+    public Vector3 iconPosToRealPos(Vector3 iconPos)
+    {
+        Vector3 realPos = new Vector3();
+        realPos.y = 0.0f;
+        //x: -145~-5, y: 5~145
+        realPos.x = (float)((int)(iconPos.x + 5.0f/10.0f));
+        realPos.z = (float)((int)(iconPos.y - 5.0f/10.0f));
+        return realPos;
+    }
+    public void M_RoundUpdate_()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            round += 1;
+            if (teamRound == 1)
+            {
+                //Debug.Log("Round: "+round.ToString()+"change teamRound to 2.");
+                teamRound = 2;
+            }
+            else
+            {
+                //Debug.Log("Round: "+round.ToString()+"change teamRound to 1");
+                teamRound = 1;
+            }
+            photonView.RPC("TeamRoundUpdate", RpcTarget.All, teamRound, round);
+        }
+        round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
+        string newRoundText = "回合:"+((int)round).ToString();
+        teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
+        if (teamRound == playerTeam)
+        {
+            //my team's round
+            //diceSliderPanel.SetActive(true);
+            //Debug.Log("my team's round");
+            newRoundText += "\n(進攻)";
+        }
+        else
+        {
+            //not my team's round
+            player.P_SetActionPoint(0);
+            //actionPointPanel.SetActive(false);
+            //Debug.Log("not my team's round. my team: "+playerTeam.ToString()+", this round: "+teamRound.ToString());
+            newRoundText += "\n(防守)";
+        }
+        roundText.text = newRoundText;
     }
 
     public void M_Movement(int dir)
     {
         Vector3 location = player.P_GetLocation();
         int tempActionPoint = player.P_GetActionPoint();
+        PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"] = location;
         //紀錄現在的location
         if (dir == 0)
         {
@@ -164,7 +501,7 @@ public class GameManager : MonoBehaviour
         //消耗actionpoint
         player.P_SetLocation(location);
         //更動Player的Location
-        Debug.Log("x: " + location.x + ", y: " + location.y + ", z: " + location.z);
+        //Debug.Log("x: " + location.x + ", y: " + location.y + ", z: " + location.z);
     }
 
     public void M_RowDice(int num)
@@ -172,14 +509,14 @@ public class GameManager : MonoBehaviour
         int temp = UnityEngine.Random.Range(num, num * 6);
         M_ChangeDice(-num);
         M_GetPoint(temp);
-        tempTime = 10 - tempTime;
-        roundstate = 1;
+        //tempTime = 10 - tempTime;
+        //roundstate = 1;
     }
 
     public void M_ChangeDice(int num)
     {
         int dice = player.P_GetDiceAmount();
-        Debug.Log("GameManager:M_ChangeDice: dice: " + dice + ", num: " + num);
+        //Debug.Log("GameManager:M_ChangeDice: dice: " + dice + ", num: " + num);
         //取得P_dice
         dice += num;
         //變更dice
@@ -456,7 +793,7 @@ public class GameManager : MonoBehaviour
 
             default:
 
-                Debug.LogError("道具參數有誤或是未包含全部道具的實作");
+                //Debug.LogError("道具參數有誤或是未包含全部道具的實作");
                 break;
 
         }
@@ -531,7 +868,7 @@ public class GameManager : MonoBehaviour
 
             default:
 
-                Debug.LogError("道具參數有誤或是未包含全部道具的實作");
+                //Debug.LogError("道具參數有誤或是未包含全部道具的實作");
                 break;
 
         }

@@ -49,8 +49,10 @@ public class Player : MonoBehaviour
     private PhotonView photonView;
     private GameObject playerObj;
     private int skill;
-    private int order;//random order among players
+    private int order = -1;//random order among players
     private bool moveLock = false;//if lock is true, player cannot move by user
+    private bool initialized = false;
+    int usedDiceAmount = 0;
     /*  
         skill
         1.每三回合可以額外使用一顆免費骰子 
@@ -63,120 +65,106 @@ public class Player : MonoBehaviour
 	//Awake is called before Start(). Initialization
 	void Awake()
 	{
-		//if no player currently, set player to this 
-		if(player == null)
-		{
-			player = this;
-		}
-		p_location = player.transform.position;//set the current player location
-	}
+        //if no player currently, set player to this 
+        if(player == null)
+        {
+            player = this;
+        }
+        p_location = player.transform.position;//set the current player location
+        if(anim == null)
+        {
+            anim = GetComponent<Animator>();    
+        }
+        	}
     // Start is called before the first frame update
     void Start()
     {
-        //get player rigidBody
-        Debug.Log("Initializing player...");
-        p_team = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
-        p_teamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
-        order = (int)PhotonNetwork.LocalPlayer.CustomProperties["order"];
-        Debug.Log("my team: "+p_team.ToString()+", mate: "+p_teamMate.ToString());
-        
-        p_rigidBody = GetComponent<Rigidbody>();
-        anim = GetComponent<Animator>();
-        //anim.Play("WALK00_F", -1, 0f);
-        //set player location randomly
-        /*
-        System.Random rnd = new System.Random();
-        int x = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
-        int z = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
-        Debug.Log("x: "+x.ToString()+", z: "+z.ToString());
-        P_SetLocation(new Vector3(x, 0, z));
-        */
-        //set view
-        for(int i = 0 ; i < mapSize ; i ++)
-        {
-            for(int j = 0 ; j < mapSize ; j ++)
-            {
-                p_view[i, j] = 0;
-            }
-        }
-        anim.Play("WAIT04");
-        playerObj = gameObject;
         photonView = GetComponent<PhotonView>();
-        if(order%2 == 1)
+        p_rigidBody = GetComponent<Rigidbody>();
+        //if(photonView.IsMine)
+        //{
+            //get player rigidBody
+        if(PhotonNetwork.LocalPlayer.CustomProperties["order"] != null)
         {
-            p_diceAmount = 40;
-            p_attack = 3;
-            p_defense = 3;
-            p_itemAmountMax = 6;
-            skill = 1;
-            Debug.Log("sec1");
+            p_team = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
+            p_teamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
+            Debug.Log("Initializing player...");
+            Debug.Log("my team: "+p_team.ToString()+", mate: "+p_teamMate.ToString());
+            setAttrs();
         }
-        else if(order == 2)
-        {
-            p_diceAmount = 40;
-            p_attack = 5;
-            p_defense = 2;
-            p_itemAmountMax = 6;
-            skill = 2;
-            Debug.Log("sec2");
-        }
-        else//order == 4
-        {
-            p_diceAmount = 40;
-            p_attack = 4;
-            p_defense = 2;
-            p_itemAmountMax = 9;
-            skill = 3;
-            Debug.Log("sec3");
-        }
+            
+            //anim = GetComponent<Animator>();
+            //anim.Play("WALK00_F", -1, 0f);
+            //set player location randomly
+            /*
+            System.Random rnd = new System.Random();
+            int x = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
+            int z = rnd.Next(1, mapSize + 1); // creates a number between 1 and 15
+            Debug.Log("x: "+x.ToString()+", z: "+z.ToString());
+            P_SetLocation(new Vector3(x, 0, z));
+            */
+            //set view
+            for(int i = 0 ; i < mapSize ; i ++)
+            {
+                for(int j = 0 ; j < mapSize ; j ++)
+                {
+                    p_view[i, j] = 0;
+                }
+            }
+            anim.Play("WAIT04");
+            //playerObj = gameObject;
+        //}
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(photonView.IsMine)
-        {
-            /*
-            Debug.Log("my photonView, id: "+photonView.ViewID.ToString()+", owner: "+photonView.Owner.NickName);
-            playerObj.layer = LayerMask.NameToLayer("HideInMinimap");
-            Transform transform = playerObj.transform;
-            Transform[] childTrans = playerObj.GetComponentsInChildren<Transform>();
-              //child is your child transform
-            foreach(Transform child in childTrans){
-                child.gameObject.layer = LayerMask.NameToLayer("HideInMinimap");
+        
+        //if(photonView.IsMine)
+        //{
+            if(moveLock == null)
+            {
+                moveLock = false;
             }
-            */
-            //photonView.RPC("")
-        }
-        else
-        {
-            Debug.Log("not my photonView, id: "+photonView.ViewID.ToString()+", owner: "+photonView.Owner.NickName);
-        } 
-    	//update movement in every frame if p_actionPoint > 0
-    	if(p_actionPoint > 0 && p_movingMode && !moveLock)
-    	{
-            //Animator plays "walk" animation at the beggining of a frame.
-            //After walk animation, go back to wait.
-            //anim.Play("WAIT00", -1, 0f);
-            //Debug.Log("walk");
-            anim.Play("WALK");
-    		P_Movement();
-    	}
-        else
-        {
-            anim.Play("WAIT00");
-        }
-
-        //press Space: put ward at current location
-        if(Input.GetKeyDown("space") && p_wardAmountUnused >= 1)
-        {
-            //check if able to put ward(ward amount >= 1)
-            P_PutWard(p_location);
-            wards.Add(new Eye(p_id, p_team, p_location));
-            p_wardAmountUnused -= 1;
-            p_wardAmountUsed += 1;
-        }
+            else
+            {
+                //do nothing
+            }
+            if(order == -1)
+            {
+                setAttrs();
+            }
+            else
+            {
+                //setAttrs();
+            }
+            //update movement in every frame if p_actionPoint > 0
+            if(p_actionPoint > 0 && p_movingMode && !moveLock)
+            {
+                //Animator plays "walk" animation at the beggining of a frame.
+                //After walk animation, go back to wait.
+                //anim.Play("WAIT00", -1, 0f);
+                //Debug.Log("walk");
+                anim.Play("WALK");
+                P_Movement();
+            }
+            else
+            {
+                anim.Play("WAIT00");
+            }
+            
+            //press Space: put ward at current location
+            if(Input.GetKeyDown("space") && p_wardAmountUnused >= 1)
+            {
+                //check if able to put ward(ward amount >= 1)
+                P_PutWard(p_location);
+                wards.Add(new Eye(p_id, p_team, p_location));
+                p_wardAmountUnused -= 1;
+                p_wardAmountUsed += 1;
+            }
+        //} 
         //else if(Input.GetKeyDown(KeyCode.Q) && )
+        
     }
     /*
 		Method: P_Movement
@@ -184,6 +172,47 @@ public class Player : MonoBehaviour
 		則傳送移動方向給GameManager.M_Movement，
 		並且每走一步扣一點actionPoint。
     */
+    public void setAttrs()
+    {
+        
+        if(PhotonNetwork.LocalPlayer.CustomProperties["order"] != null &&
+         (int)PhotonNetwork.LocalPlayer.CustomProperties["order"] > 0)
+        {
+            p_team = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
+            p_teamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
+            order = (int)PhotonNetwork.LocalPlayer.CustomProperties["order"];
+            if(order%2 == 1)
+            {
+                p_diceAmount = 40;
+                p_attack = 3;
+                p_defense = 3;
+                p_itemAmountMax = 6;
+                skill = 1;
+                Debug.Log("sec1");
+            }
+            else if(order == 2)
+            {
+                p_diceAmount = 40;
+                p_attack = 5;
+                p_defense = 2;
+                p_itemAmountMax = 6;
+                skill = 2;
+                Debug.Log("sec2");
+            }
+            else//order == 4
+            {
+                p_diceAmount = 40;
+                p_attack = 4;
+                p_defense = 2;
+                p_itemAmountMax = 9;
+                skill = 3;
+                Debug.Log("sec3");
+            }
+            Debug.Log("Player Set attrs: order: "+order.ToString()+", dice: "+
+            p_diceAmount.ToString()+", attack: "+p_attack.ToString()+", defense: "
+            + p_defense.ToString()+", skill: "+skill.ToString());
+        }
+    }
 	public void P_Movement()
 	{
         Vector3 fromLocation = P_GetLocation();
@@ -226,11 +255,13 @@ public class Player : MonoBehaviour
     	}
     	//send request dice amount to game manager
     	GameManager.gameManager.M_RowDice(requestDiceAmount);
+        usedDiceAmount += requestDiceAmount;
         //update ui 上顯示的 action point
         Text diceAmountText = GameObject.Find("diceAmount").GetComponent<Text>();
         diceAmountText.text = p_diceAmount.ToString();
         
         P_UpdateActionPointText();
+        PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = 1;
     }
     /*
         Method: P_UpdateActionPointText
@@ -453,6 +484,40 @@ public class Player : MonoBehaviour
     public void P_SetMoveLock(bool moveLock)
     {
         this.moveLock = moveLock;
+    }
+    public bool playerInMyArea(Vector3 pos)
+    {
+        bool flag = false;
+        List<Vector3> wardLocs = player.P_GetWardLocations();
+        foreach(Vector3 loc in wardLocs)
+        {
+            float dist = Vector3.Distance(loc, pos);
+            if(dist < Vector3.Distance(new Vector3(0, 0, 0), new Vector3(1, 1, 0)))
+            {
+                flag = true;
+                return flag;
+            }
+        }
+        float dis = Vector3.Distance(player.transform.position, pos);
+        if(dis < Vector3.Distance(new Vector3(0, 0, 0), new Vector3(1, 1, 0)))
+        {
+            flag = true;
+        }
+        return flag;
+    }
+    public bool playerInMyCurrentArea(Vector3 pos)
+    {
+        bool flag = false;
+        float dis = Vector3.Distance(player.transform.position, pos);
+        if(dis < Vector3.Distance(new Vector3(0, 0, 0), new Vector3(1, 1, 0)))
+        {
+            flag = true;
+        }
+        return flag;
+    }
+    public int GetUsedDiceAmount()
+    {
+        return usedDiceAmount;
     }
 }   
 

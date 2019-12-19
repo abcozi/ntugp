@@ -137,16 +137,18 @@ public class Map : MonoBehaviour
         //}
 
         //取得回合
-        if (gameManager.M_GetTeamRound() == player.P_GetTeam())
+        if (gameManager.M_GetTeamRound() == player.P_GetTeam()
+            || gameManager.M_GetRound() <= 4)
         {
             //my team's round
             myRound = true;
-
+            //Debug.Log("myround true");
         }
         else
         {
             //not my team's round
             myRound = false;
+            //Debug.Log("myround false");
         }
 
         //當使用者點擊
@@ -353,15 +355,16 @@ public class Map : MonoBehaviour
             }
         }
 
-        if (roundPre != gameManager.M_GetRound())
+        if (roundPre != gameManager.M_GetRound())//**
         {
             UpdateBarrenState();
             UpdatePortalState();
             ResetFetchItemPanel();
             resetStoreItem = false;
             if (!isfetchingItem)
+            {
                 player.P_SetMoveLock(false);
-
+            }
             ForceMouseOn();
             roundPre = gameManager.M_GetRound();
         }
@@ -2184,11 +2187,13 @@ public class Map : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.W))//往前走
         {
-            if (!(onPuddle || onTrap))
+            if (!(onPuddle || onTrap)){
                 player.P_SetMoveLock(false);
+            }
 
-            if (player.P_GetActionPoint() > 0)
+            if (player.P_GetActionPoint() > 0){
                 player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 0, 0);
+            }
             if (treeGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1)
             {
                 player.P_SetMoveLock(true);
@@ -2243,11 +2248,13 @@ public class Map : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.A))//往左走
         {
-            if (!(onPuddle || onTrap))
+            if (!(onPuddle || onTrap)){
                 player.P_SetMoveLock(false);
+            }
 
-            if (player.P_GetActionPoint() > 0)
+            if (player.P_GetActionPoint() > 0){
                 player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 270, 0);
+            }
 
             if (treeGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1)
             {
@@ -2301,11 +2308,13 @@ public class Map : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.S))//往後走
         {
-            if (!(onPuddle || onTrap))
+            if (!(onPuddle || onTrap)){
                 player.P_SetMoveLock(false);
+            }
 
-            if (player.P_GetActionPoint() > 0)
+            if (player.P_GetActionPoint() > 0){
                 player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+            }
 
             if (treeGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1)
             {
@@ -2360,11 +2369,13 @@ public class Map : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.D))//往右走
         {
-            if (!(onPuddle || onTrap))
+            if (!(onPuddle || onTrap)){
                 player.P_SetMoveLock(false);
+            }
 
-            if (player.P_GetActionPoint() > 0)
+            if (player.P_GetActionPoint() > 0){
                 player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 90, 0);
+            }
 
             if (treeGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1)
             {

@@ -64,5 +64,6 @@ MonoBehaviour:
   - SetChopTreeLock
   - UpdatePortalStatus
   - SetFetchItemLock
+  - UpdatePositionToOthers
   DisableAutoOpenWizard: 1
   ShowSettings: 0

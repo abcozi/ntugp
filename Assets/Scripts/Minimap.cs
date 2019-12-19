@@ -129,57 +129,70 @@ public class Minimap : MonoBehaviour
 	public void ViewUp(Vector3 mousePosition, float diff)
 	{
 		float cameraNewZ = subCamera.transform.position.z + 1.0f;
-		if(cameraNewZ >= 7.5f + diff)
-		{
-			cameraNewZ = 7.5f + diff;
+		float cameraY = subCamera.transform.position.y;
+		if(cameraY < 16.0){
+			if(cameraNewZ >= 7.5f + diff)
+			{
+				cameraNewZ = 7.5f + diff;
+			}
+			else if(cameraNewZ <= 7.5f - diff)
+			{
+				cameraNewZ = 7.5f - diff;
+			}
+			Vector3 camPos = new Vector3(subCamera.transform.position.x, subCamera.transform.position.y, cameraNewZ);
+			controller.UpdatePosition(camPos);
 		}
-		else if(cameraNewZ <= 7.5f - diff)
-		{
-			cameraNewZ = 7.5f - diff;
-		}
-		Vector3 camPos = new Vector3(subCamera.transform.position.x, subCamera.transform.position.y, cameraNewZ);
-		controller.UpdatePosition(camPos);
 	}
 	public void ViewDown(Vector3 mousePosition, float diff)
 	{
 		float cameraNewZ = subCamera.transform.position.z - 1.0f;
-		if(cameraNewZ >= 7.5f + diff)
-		{
-			cameraNewZ = 7.5f + diff;
+		float cameraY = subCamera.transform.position.y;
+		if(cameraY < 16.0){
+			if(cameraNewZ >= 7.5f + diff)
+			{
+				cameraNewZ = 7.5f + diff;
+			}
+			else if(cameraNewZ <= 7.5f - diff)
+			{
+				cameraNewZ = 7.5f - diff;
+			}
+			Vector3 camPos = new Vector3(subCamera.transform.position.x, subCamera.transform.position.y, cameraNewZ);
+			controller.UpdatePosition(camPos);
 		}
-		else if(cameraNewZ <= 7.5f - diff)
-		{
-			cameraNewZ = 7.5f - diff;
-		}
-		Vector3 camPos = new Vector3(subCamera.transform.position.x, subCamera.transform.position.y, cameraNewZ);
-		controller.UpdatePosition(camPos);
 	}
 	public void ViewLeft(Vector3 mousePosition, float diff)
 	{
 		float cameraNewX = subCamera.transform.position.x - 1.0f;
-		if(cameraNewX <= 7.5f - diff)
-		{
-			cameraNewX = 7.5f - diff;
+		float cameraY = subCamera.transform.position.y;
+		if(cameraY < 16.0){
+			if(cameraNewX <= 7.5f - diff)
+			{
+				cameraNewX = 7.5f - diff;
+			}
+			else if(cameraNewX >= 7.5f + diff)
+			{
+				cameraNewX = 7.5f + diff;
+			}
+			Vector3 camPos = new Vector3(cameraNewX, subCamera.transform.position.y, subCamera.transform.position.z);
+			controller.UpdatePosition(camPos);
 		}
-		else if(cameraNewX >= 7.5f + diff)
-		{
-			cameraNewX = 7.5f + diff;
-		}
-		Vector3 camPos = new Vector3(cameraNewX, subCamera.transform.position.y, subCamera.transform.position.z);
-		controller.UpdatePosition(camPos);
 	}
+		
 	public void ViewRight(Vector3 mousePosition, float diff)
 	{
 		float cameraNewX = subCamera.transform.position.x + 1.0f;
-		if(cameraNewX <= 7.5f - diff)
-		{
-			cameraNewX = 7.5f - diff;
+		float cameraY = subCamera.transform.position.y;
+		if(cameraY < 16.0){
+			if(cameraNewX <= 7.5f - diff)
+			{
+				cameraNewX = 7.5f - diff;
+			}
+			else if(cameraNewX >= 7.5f + diff)
+			{
+				cameraNewX = 7.5f + diff;
+			}
+			Vector3 camPos = new Vector3(cameraNewX, subCamera.transform.position.y, subCamera.transform.position.z);
+			controller.UpdatePosition(camPos);
 		}
-		else if(cameraNewX >= 7.5f + diff)
-		{
-			cameraNewX = 7.5f + diff;
-		}
-		Vector3 camPos = new Vector3(cameraNewX, subCamera.transform.position.y, subCamera.transform.position.z);
-		controller.UpdatePosition(camPos);
 	}
 }

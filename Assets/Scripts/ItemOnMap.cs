@@ -58,7 +58,8 @@ public class ItemOnMap : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     public void OnPointerEnter(PointerEventData eventData)
     {
         bool surrounding = map.Surrounding((int)position.x, (int)position.y, (int)player.P_GetLocation().x, (int)player.P_GetLocation().z);
-        if (gameManager.M_GetTeamRound() == player.P_GetTeam() && surrounding && player.P_GetActionPoint() != 0 && !map.S_GetIfConfirm() && !map.isChoosingItemToDiscard)
+        if ((gameManager.M_GetTeamRound() == player.P_GetTeam()
+            || gameManager.M_GetRound() <= 4) && surrounding && player.P_GetActionPoint() != 0 && !map.S_GetIfConfirm() && !map.isChoosingItemToDiscard)
             Cursor.SetCursor(texture, hotSpot, cursorMode);
     }
 

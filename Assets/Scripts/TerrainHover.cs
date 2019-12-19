@@ -37,20 +37,20 @@ public class TerrainHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public void OnPointerEnter(PointerEventData eventData)
     {
         bool surrounding = map.Surrounding((int)position.x, (int)position.y, (int)player.P_GetLocation().x, (int)player.P_GetLocation().z);
-        if ((gameManager.M_GetTeamRound() != player.P_GetTeam()) && (map.S_GetTerrain((int)position.x, (int)position.y) == 1 || map.S_GetTerrain((int)position.x, (int)position.y) == 4)
+        if ((gameManager.M_GetRound() > 4 && gameManager.M_GetTeamRound() != player.P_GetTeam()) && (map.S_GetTerrain((int)position.x, (int)position.y) == 1 || map.S_GetTerrain((int)position.x, (int)position.y) == 4)
             && surrounding && !map.S_GetIfIsFetchingItem() && !map.S_GetIfConfirm() && !map.isChoosingItemToDiscard)
         {
             hotSpot = new Vector2(texture.width / 8, texture.height);
             Cursor.SetCursor(texture, hotSpot, cursorMode);
         }
-        if ((gameManager.M_GetTeamRound() == player.P_GetTeam()) && (map.S_GetTerrain((int)position.x, (int)position.y) == -4) && surrounding && !map.S_GetIfConfirm() 
+        if ((gameManager.M_GetRound() <= 4 ||gameManager.M_GetTeamRound() == player.P_GetTeam()) && (map.S_GetTerrain((int)position.x, (int)position.y) == -4) && surrounding && !map.S_GetIfConfirm() 
             && player.P_GetActionPoint() > 0 && !map.isChoosingItemToDiscard)
         {
             hotSpot = new Vector2(texture.width / 1.5f, texture.height* 0.2f);
             Cursor.SetCursor(trapTexture, hotSpot, cursorMode);
             
         }
-        if ((gameManager.M_GetTeamRound() == player.P_GetTeam()) && (map.S_GetTerrain((int)position.x, (int)position.y) == 6) && surrounding && !map.S_GetIfConfirm() 
+        if ((gameManager.M_GetRound() <= 4 || gameManager.M_GetTeamRound() == player.P_GetTeam()) && (map.S_GetTerrain((int)position.x, (int)position.y) == 6) && surrounding && !map.S_GetIfConfirm() 
             && player.P_GetActionPoint() > 0 && !map.isChoosingItemToDiscard)
         {
             hotSpot = new Vector2(texture.width / 1.5f, texture.height * 0.2f);
