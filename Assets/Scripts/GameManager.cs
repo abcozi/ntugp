@@ -314,10 +314,10 @@ public class GameManager : MonoBehaviour
         
         gameOverCanvas.SetActive(true);
         string[] names = new string[]{"alice", "brandon", "charlotte", "dean"};
-        result1.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[0]-1]) as Sprite;
-        result2.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[1]-1]) as Sprite;
-        result3.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[2]-1]) as Sprite;
-        result4.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[3]-1]) as Sprite;
+        result1Img.sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[0]-1]) as Sprite;
+        result2Img.sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[1]-1]) as Sprite;
+        result3Img.sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[2]-1]) as Sprite;
+        result4Img.sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[3]-1]) as Sprite;
         
         if(results[0] == 1)
         {
