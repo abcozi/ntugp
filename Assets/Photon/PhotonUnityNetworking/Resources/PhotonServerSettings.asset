@@ -65,5 +65,10 @@ MonoBehaviour:
   - UpdatePortalStatus
   - SetFetchItemLock
   - UpdatePositionToOthers
+  - AttackRivals
+  - UpdateAlive
+  - UpdateDefense
+  - UpdateDA
+  - GameOver
   DisableAutoOpenWizard: 1
   ShowSettings: 0

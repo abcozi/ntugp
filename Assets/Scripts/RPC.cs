@@ -9,6 +9,50 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RPC : MonoBehaviour
 {
+	[PunRPC]
+    void GameOver(int r1, int r2, int r3, int r4)
+    {
+    	PhotonNetwork.LocalPlayer.CustomProperties["gameOverF"] = true;
+    	PhotonNetwork.LocalPlayer.CustomProperties["r1"] = r1;
+    	PhotonNetwork.LocalPlayer.CustomProperties["r2"] = r2;
+    	PhotonNetwork.LocalPlayer.CustomProperties["r3"] = r3;
+    	PhotonNetwork.LocalPlayer.CustomProperties["r4"] = r4;
+
+    }
+    [PunRPC]
+    void AttackRivals(int idBeAttacked, int damage)
+    {
+    	int id = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
+    	if(idBeAttacked == id)
+    	{
+    		try
+    		{
+    			//if i am attacked
+    			Player myPlayer = GameObject.Find("Player"+id.ToString()).GetComponent<Player>();
+    			myPlayer.P_SetDiceAmount(myPlayer.P_GetDiceAmount()-damage);
+    			Debug.Log("Got attacked: -"+damage.ToString()+" dices");
+    		}
+    		catch(System.Exception ex)
+    		{
+    			Debug.Log(ex.ToString());
+    		}
+    	}
+    }
+    [PunRPC]
+	void UpdateDefense(int pID, int def)
+	{
+		PhotonNetwork.LocalPlayer.CustomProperties["def"+pID.ToString()] = def;
+	}
+	[PunRPC]
+	void UpdateAlive(int pID, bool flag)
+	{
+		PhotonNetwork.LocalPlayer.CustomProperties["alive"+pID.ToString()] = flag;
+	}
+	[PunRPC]
+	void UpdateDA(int pID, int amount)
+	{
+		PhotonNetwork.LocalPlayer.CustomProperties["da"+pID.ToString()] = amount;
+	}
     [PunRPC]
 	void CharacterListingUpdate(bool IsChosen, int selectedPlayerId, int imgID, string playerName)
 	{
@@ -32,6 +76,11 @@ public class RPC : MonoBehaviour
 	[PunRPC]
 	void SetTeams(int num1, int num2, int num3, int num4)
 	{
+		
+		PhotonNetwork.LocalPlayer.CustomProperties["porder1"] = num1;
+		PhotonNetwork.LocalPlayer.CustomProperties["porder2"] = num2;
+		PhotonNetwork.LocalPlayer.CustomProperties["porder3"] = num3;
+		PhotonNetwork.LocalPlayer.CustomProperties["porder4"] = num4;
 		
 		if(PhotonNetwork.LocalPlayer.CustomProperties["order"] == null || 
 			(PhotonNetwork.LocalPlayer.CustomProperties["order"] != null && 
@@ -98,15 +147,28 @@ public class RPC : MonoBehaviour
 		else
 		{
 			PhotonNetwork.LocalPlayer.CustomProperties["teamRound"] = team;
+			try
+			{
+				GameObject obj = GameObject.Find("Player"+PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"].ToString());
+				Player thisPlayer = obj.GetComponent<Player>();
+				thisPlayer.P_SetActionPoint(0);
+			}
+			catch(System.Exception ex)
+			{
+				Debug.Log("RPC_teamRoundUpdate: catch ex: "+ex.ToString());
+			}
 		}
 		PhotonNetwork.LocalPlayer.CustomProperties["round"] = round;
 		if((round > 4 && round%2==((int)PhotonNetwork.LocalPlayer.CustomProperties["team"]%2))
 			|| round <= 4)
 		{
+			PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = true;
 			PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = 0;
 		}
 		else
 		{
+			PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = false;
+			
 			PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = 1;
 		}
 	}

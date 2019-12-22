@@ -3922,6 +3922,7 @@ GameObject:
   - component: {fileID: 368687362222344460}
   - component: {fileID: 3693886187635959870}
   - component: {fileID: 1708207620540369961}
+  - component: {fileID: 4287859943630076494}
   m_Layer: 0
   m_Name: brandon
   m_TagString: Untagged
@@ -4255,6 +4256,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anim: {fileID: 0}
+--- !u!114 &4287859943630076494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6956225543190598339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70269065fe6da49328730a10e5664283, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7038296129288228594
 GameObject:
   m_ObjectHideFlags: 0

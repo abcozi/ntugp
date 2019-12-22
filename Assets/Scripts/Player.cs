@@ -52,6 +52,7 @@ public class Player : MonoBehaviour
     private int order = -1;//random order among players
     private bool moveLock = false;//if lock is true, player cannot move by user
     private bool initialized = false;
+    private bool alive = true;
     int usedDiceAmount = 0;
     /*  
         skill
@@ -114,6 +115,20 @@ public class Player : MonoBehaviour
             anim.Play("WAIT04");
             //playerObj = gameObject;
         //}
+            try
+                {
+                    if(photonView.IsMine)
+                    {
+                        //photonView.RPC("TimeUpdate", RpcTarget.All, newTimerVal);
+                        photonView.RPC("UpdateDefense", RpcTarget.All, p_id, p_defense);
+                        photonView.RPC("UpdateAlive", RpcTarget.All, p_id, alive);
+                        photonView.RPC("UpdateDA", RpcTarget.All, p_id, p_diceAmount);
+                    }
+                }
+                catch(System.Exception ex)
+                {
+                    Debug.Log(ex.ToString());
+                }
     }
 
     // Update is called once per frame
@@ -162,9 +177,68 @@ public class Player : MonoBehaviour
                 p_wardAmountUnused -= 1;
                 p_wardAmountUsed += 1;
             }
+            try
+                {
+                    if(photonView.IsMine)
+                    {
+                        //photonView.RPC("TimeUpdate", RpcTarget.All, newTimerVal);
+                        photonView.RPC("UpdateDefense", RpcTarget.All, p_id, p_defense);
+                        photonView.RPC("UpdateAlive", RpcTarget.All, p_id, alive);
+                        photonView.RPC("UpdateDA", RpcTarget.All, p_id, p_diceAmount);
+                    }
+                }
+                catch(System.Exception ex)
+                {
+                    Debug.Log(ex.ToString());
+                }
+                AttackAtempt();
         //} 
         //else if(Input.GetKeyDown(KeyCode.Q) && )
         
+    }
+    public void AttackAtempt()
+    {
+        if(Input.GetKeyDown(KeyCode.Z))
+        {
+            //attack rivals
+            for(int i = 1 ; i <= 4 ; i ++)
+            {
+                if(i == p_id || i == p_teamMate)
+                {
+                    continue;
+                }
+                else
+                {
+                    //rivals
+                    Vector3 rivLoc = (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer"+i.ToString()];
+                    Vector3 myLoc = p_location;
+                    if(Vector3.Distance(rivLoc, myLoc) <= Vector3.Distance(new Vector3(0, 0, 0), new Vector3(2, 2, 0)))
+                    {
+                        //attack
+                        int rivDef = (int)PhotonNetwork.LocalPlayer.CustomProperties["def"+i.ToString()];
+                        bool rivalAlive = (bool)PhotonNetwork.LocalPlayer.CustomProperties["alive"+i.ToString()];
+                        bool quota = (bool)PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"];
+                        if(rivDef < p_attack && rivalAlive && quota)
+                        {
+                            try
+                            {  
+                                Debug.Log("attack rival");
+                                photonView.RPC("AttackRivals", RpcTarget.All, i, p_attack - rivDef);
+                                PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = false;
+                            }
+                            catch(System.Exception ex)
+                            {
+                                Debug.Log(ex.ToString());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //not attack
+                    }
+                }
+            }
+        }
     }
     /*
 		Method: P_Movement

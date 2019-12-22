@@ -69,8 +69,7 @@ public class HudController : MonoBehaviour
         player = GameObject.Find("Player"+playerID.ToString()).GetComponent<Player>();
 		try
         {
-            nickNameTxt.text = (string)PhotonNetwork.LocalPlayer.NickName+"_"+
-            PhotonNetwork.LocalPlayer.CustomProperties["order"].ToString();
+            nickNameTxt.text = (string)PhotonNetwork.LocalPlayer.NickName;
             
             attackValueTxt.text = player.P_GetAttack().ToString();
             defenseValueTxt.text = player.P_GetDefense().ToString();
@@ -152,7 +151,7 @@ public class HudController : MonoBehaviour
     }
     public void setAttrs()
     {	
-    	nickNameTxt.text = player.P_GetNickName()+PhotonNetwork.LocalPlayer.CustomProperties["order"].ToString();
+    	nickNameTxt.text = player.P_GetNickName();
     	attackValueTxt.text = player.P_GetAttack().ToString();
     	defenseValueTxt.text = player.P_GetDefense().ToString();
     	skillValueText.text = player.P_GetSkill().ToString();

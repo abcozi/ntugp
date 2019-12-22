@@ -2688,6 +2688,7 @@ GameObject:
   - component: {fileID: 6136537335574536359}
   - component: {fileID: 1264204122069163042}
   - component: {fileID: 5164413018936044626}
+  - component: {fileID: 4510518467874368823}
   m_Layer: 0
   m_Name: charlotte
   m_TagString: Untagged
@@ -3021,6 +3022,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anim: {fileID: 0}
+--- !u!114 &4510518467874368823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3765434221582678628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70269065fe6da49328730a10e5664283, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3799331033140085355
 GameObject:
   m_ObjectHideFlags: 0

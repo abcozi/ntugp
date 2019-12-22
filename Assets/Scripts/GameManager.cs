@@ -35,8 +35,28 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private Text roundText;
     private List<GameObject> playerImgs = new List<GameObject>();
-
+    [SerializeField]
+    private GameObject gameOverCanvas;
+    [SerializeField]
+    private GameObject playAgainBtn;
+    [SerializeField]
+    private Text result1;
+    [SerializeField]
+    private Text result2;
+    [SerializeField]
+    private Text result3;
+    [SerializeField]
+    private Text result4;
+    [SerializeField]
+    private Image result1Img;
+    [SerializeField]
+    private Image result2Img;
+    [SerializeField]
+    private Image result3Img;
+    [SerializeField]
+    private Image result4Img;
     float tempTime = 0;
+    bool gameOver = false;
 
     void Awake()
     {
@@ -79,79 +99,290 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         
-            playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
-            player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
-            playerTeam = player.P_GetTeam();
-            playerTeamMate = player.P_GetTeamMate();
-            if(PhotonNetwork.IsMasterClient)
-            {
-                //sync "tempTime", "teamRound", "round"
-                photonView.RPC("TimeUpdate", RpcTarget.All, 0.0f);
-                photonView.RPC("TeamRoundUpdate", RpcTarget.All, 1, 1);
-                InvokeRepeating("UpdateTimer", 0.0f, 1.0f);
-                //UpdateTimer();
-            }
             try
             {
-                PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"] = player.transform.position;
-                UpdateMinimap();
+                playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
+                player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
+                playerTeam = player.P_GetTeam();
+                playerTeamMate = player.P_GetTeamMate();
+                if(PhotonNetwork.IsMasterClient)
+                {
+                    //sync "tempTime", "teamRound", "round"
+                    photonView.RPC("TimeUpdate", RpcTarget.All, 0.0f);
+                    photonView.RPC("TeamRoundUpdate", RpcTarget.All, 1, 1);
+                    InvokeRepeating("UpdateTimer", 0.0f, 1.0f);
+                    //UpdateTimer();
+                }
+                try
+                {
+                    PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"] = player.transform.position;
+                    UpdateMinimap();
+                }
+                catch(System.Exception ex)
+                {
+
+                }
             }
             catch(System.Exception ex)
             {
 
-            }
+            }       
     }
     void Update()
     {
         
-
-            if(player == null)
+            try
             {
-                player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
-                playerTeam = player.P_GetTeam();
-                playerTeamMate = player.P_GetTeamMate();
-            }
-            else
-            {
-            }
-            if(playerTeam <= 0)
-            {
-                playerTeam = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
-                playerTeamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
-            }
-            else
-            {
-                
-            }
-            if((float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"] != tempTime)
-            {
-                tempTime = (float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"];
-                round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
-                teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
-                roundstate = (int)PhotonNetwork.LocalPlayer.CustomProperties["roundState"];
-                
-                //update round every 20 secs
-                UpdateRoundState();
-
-                //update item effect state
-                if (roundPre != round)
+                Debug.Log("update gamestate");
+                int round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
+                if(round > 5)
                 {
-                    UpdateItemEffectState();
-                    roundPre = round;
+                    List<int> orders = new List<int>();
+                    for(int i = 1 ; i <= 4 ; i ++)
+                    {
+                        orders.Add((int)PhotonNetwork.LocalPlayer.CustomProperties["porder"+i.ToString()]);
+                    }
+                    for(int i = 1 ; i <= 4 ; i ++)
+                    {
+                        Debug.Log("order"+i.ToString()+": "+orders[i-1].ToString());
+                    }
+                    List<int> das = new List<int>();
+                    for(int i = 0 ; i < 4 ; i ++)
+                    {
+                        try
+                        {
+                            das.Add((int)PhotonNetwork.LocalPlayer.CustomProperties["da"+orders[i].ToString()]);
+
+                        }
+                        catch(System.Exception ex)
+                        {
+                            das.Add(0);
+
+                        }
+                    }
+                    for(int i = 1 ; i <= 4 ; i ++)
+                    {
+                        Debug.Log("da"+i.ToString()+": "+das[i-1].ToString());
+                    }
+                    int team1Sum = das[0]+das[1];
+                    int team2Sum = das[2]+das[3]; 
+                    Debug.Log("team1Sum: "+team1Sum.ToString()+", team2Sum: "+team2Sum.ToString());
+                    if(PhotonNetwork.IsMasterClient)
+                    {
+                        if(round >= 20)
+                        {
+                            //骰子多的隊贏
+                            GameOver(team1Sum, team2Sum);
+                            gameOver = true;
+                        }
+                        else
+                        {
+                            if(team1Sum <= 0 || team2Sum <= 0)
+                            {
+                                GameOver(team1Sum, team2Sum);
+                                gameOver = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        gameOver = (bool)PhotonNetwork.LocalPlayer.CustomProperties["gameOverF"];
+                        if(gameOver)
+                        {
+                            GameOver(team1Sum, team2Sum);
+                        }
+                    }
                 }
+            }
+            catch(System.Exception ex)
+            {
+                Debug.Log(ex.ToString());
+            }
+            try
+            {
+                if(player == null)
+                {
+                    player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
+                    playerTeam = player.P_GetTeam();
+                    playerTeamMate = player.P_GetTeamMate();
+                }
+                else
+                {
+                }
+                if(playerTeam <= 0)
+                {
+                    playerTeam = (int)PhotonNetwork.LocalPlayer.CustomProperties["team"];
+                    playerTeamMate = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamMate"];
+                }
+                else
+                {
+                    
+                }
+                if((float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"] != tempTime)
+                {
+                    tempTime = (float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"];
+                    round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
+                    teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
+                    roundstate = (int)PhotonNetwork.LocalPlayer.CustomProperties["roundState"];
+                    
+                    //update round every 20 secs
+                    UpdateRoundState();
 
-                //update minimap
-                UpdateMinimap();
+                    //update item effect state
+                    if (roundPre != round)
+                    {
+                        UpdateItemEffectState();
+                        roundPre = round;
+                    }
 
-                //master client updates timer
-                //all clients update timer value got from master client
-                //Debug.Log("timer: "+((int)tempTime).ToString());
-                UpdateTimerRoundText();
+                    //update minimap
+                    UpdateMinimap();
+
+                    //master client updates timer
+                    //all clients update timer value got from master client
+                    //Debug.Log("timer: "+((int)tempTime).ToString());
+                    UpdateTimerRoundText();
+                }
+            }
+            catch(System.Exception ex)
+            {
+                Debug.Log(ex.ToString());
             }
 
         
     }
     /*----------------------------  Custom Methods  ---------------------------*/
+    public void GameOver(int t1s, int t2s)
+    {
+        Debug.Log("Game over.");
+        int[] results = new int[]{-2, -2, -2, -2};
+        List<int> orders = new List<int>();
+        for(int i = 1 ; i <= 4 ; i ++)
+        {
+            orders.Add((int)PhotonNetwork.LocalPlayer.CustomProperties["porder"+i.ToString()]);
+        }            
+        if(PhotonNetwork.IsMasterClient)
+        {
+            //output winners
+            
+            int team1Sum = t1s;
+            int team2Sum = t2s;
+            if(team1Sum > team2Sum)
+            {
+                //team 1 won
+                results[0] = 1;
+                results[1] = 1;
+                results[2] = -1;
+                results[3] = -1;
+            }
+            else if(team1Sum < team2Sum)
+            {
+                //team 2 won
+                results[0] = -1;
+                results[1] = -1;
+                results[2] = 1;
+                results[3] = 1;
+            }
+            else
+            {
+                //even
+                results[0] = 0;
+                results[1] = 0;
+                results[2] = 0;
+                results[3] = 0;
+            }
+            photonView.RPC("GameOver", RpcTarget.All, results[0], results[1], results[2], results[3]);
+        }
+        else
+        {
+            while(results[0] <= -2 || results[1] <= -2
+                || results[2] <= -2 || results[3] <= -2)
+            {
+                try
+                {
+                    results[0] = (int)PhotonNetwork.LocalPlayer.CustomProperties["r1"];
+                    results[1] = (int)PhotonNetwork.LocalPlayer.CustomProperties["r2"];
+                    results[2] = (int)PhotonNetwork.LocalPlayer.CustomProperties["r3"];
+                    results[3] = (int)PhotonNetwork.LocalPlayer.CustomProperties["r4"];
+                }
+                catch(System.Exception ex)
+                {
+                    Debug.Log(ex.ToString());
+                }
+            }
+        }
+        
+        gameOverCanvas.SetActive(true);
+        string[] names = new string[]{"alice", "brandon", "charlotte", "dean"};
+        result1.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[0]-1]) as Sprite;
+        result2.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[1]-1]) as Sprite;
+        result3.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[2]-1]) as Sprite;
+        result4.GetComponentInParent<Image>().sprite = Resources.Load<Sprite>("CharacterImgs/"+names[orders[3]-1]) as Sprite;
+        
+        if(results[0] == 1)
+        {
+            result1.text = "WON";
+            result1.color = Color.green;
+        }
+        else if(results[0] == -1)
+        {
+            result1.text = "LOST";
+            result1.color = Color.red;
+        }
+        else
+        {
+            result1.text = "EVEN";
+        }
+
+        if(results[1] == 1)
+        {
+            result2.text = "WON";
+            result2.color = Color.green;
+        }
+        else if(results[1] == -1)
+        {
+            result2.text = "LOST";
+            result2.color = Color.red;
+        }
+        else
+        {
+            result2.text = "EVEN";
+        }
+
+        if(results[2] == 1)
+        {
+            result3.text = "WON";
+            result3.color = Color.green;
+        }
+        else if(results[2] == -1)
+        {
+            result3.text = "LOST";
+            result3.color = Color.red;
+        }
+        else
+        {
+            result3.text = "EVEN";
+        }
+
+        if(results[3] == 1)
+        {
+            result4.text = "WON";
+            result4.color = Color.green;
+        }
+        else if(results[3] == -1)
+        {
+            result4.text = "LOST";
+            result4.color = Color.red;
+        }
+        else
+        {
+            result4.text = "EVEN";
+        }
+        if(PhotonNetwork.IsMasterClient)
+        {
+            playAgainBtn.SetActive(true);
+        }
+    }
     public void UpdateTimerRoundText()
     {
         if(round <= 4)
@@ -177,23 +408,76 @@ public class GameManager : MonoBehaviour
         if(round <= 4)
         {
             //Debug.Log("my team's round");
-            newRoundText += "\n(進攻)"+teamRound.ToString()+", "+roundstate.ToString();
+            newRoundText += "\n(進攻)";
         }
         else if(teamRound == playerTeam)
         {
             //my team's round
             //diceSliderPanel.SetActive(true);
             //Debug.Log("my team's round");
-            player.P_SetActionPoint(0);
-            newRoundText += "\n(進攻)"+teamRound.ToString()+", "+roundstate.ToString();
+            int myDA = 0;
+            int tmDA = 0;
+            int rivalSum = 0;
+            for(int i = 1 ; i <= 4 ; i ++)
+            {
+                try
+                {
+                    if(i == playerID)
+                    {
+                        myDA = (int)PhotonNetwork.LocalPlayer.CustomProperties["da"+i.ToString()];
+                    }
+                    else if(i == playerTeamMate)
+                    {
+                        tmDA = (int)PhotonNetwork.LocalPlayer.CustomProperties["da"+i.ToString()];
+                    }
+                    else
+                    {
+                        rivalSum += (int)PhotonNetwork.LocalPlayer.CustomProperties["da"+i.ToString()];
+                    }
+                }
+                catch(System.Exception e)
+                {
+
+                }
+                
+            }
+            Debug.Log("我"+(myDA+tmDA).ToString()+":敵"+(rivalSum).ToString());
+            
+            newRoundText += "\n(進攻)\n我"+(myDA+tmDA).ToString()+":敵"+(rivalSum).ToString();
         }
         else
         {
-            //not my team's round
-            player.P_SetActionPoint(0);
-            //actionPointPanel.SetActive(false);
-            //Debug.Log("not my team's round");
-            newRoundText += "\n(防守)"+teamRound.ToString()+", "+roundstate.ToString();
+            int myDA = 0;
+            int tmDA = 0;
+            int rivalSum = 0;
+            for(int i = 1 ; i <= 4 ; i ++)
+            {
+                try
+                {
+                    //not my team's round
+                    //actionPointPanel.SetActive(false);
+                    //Debug.Log("not my team's round");
+                    
+                    if(i == playerID)
+                    {
+                        myDA = (int)PhotonNetwork.LocalPlayer.CustomProperties["da"+i.ToString()];
+                    }
+                    else if(i == playerTeamMate)
+                    {
+                        tmDA = (int)PhotonNetwork.LocalPlayer.CustomProperties["da"+i.ToString()];
+                    }
+                    else
+                    {
+                        rivalSum += (int)PhotonNetwork.LocalPlayer.CustomProperties["da"+i.ToString()];
+                    }
+                }
+                catch(System.Exception ex)
+                {
+
+                }
+            }
+            Debug.Log("我"+(myDA+tmDA).ToString()+":敵"+(rivalSum).ToString());
+            newRoundText += "\n(防守)\n我"+(myDA+tmDA).ToString()+":敵"+(rivalSum).ToString();
         }
         roundText.text = newRoundText;
     }
@@ -290,93 +574,8 @@ public class GameManager : MonoBehaviour
             photonView.RPC("TeamRoundUpdate", RpcTarget.All, teamRound, round);
         }
     }
-    public void UpdateRoundState_()
-    {
-        tempTime = (float)PhotonNetwork.LocalPlayer.CustomProperties["tempTime"];
-        round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
-        teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
-        roundstate = (int)PhotonNetwork.LocalPlayer.CustomProperties["roundState"];
-        if(tempTime == 0)
-        {
-            if (round > 5 && teamRound != playerTeam)
-            {
-                //diceSliderPanel.SetActive(false);
-                roundstate = 1;
-                PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = roundstate;
-            }
-            else{
-                //diceSliderPanel.SetActive(true);
-                roundstate = 0;
-                PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = roundstate;
-            }
-        }
-        else
-        {
-            //0 < tempTime < 20
-            if (roundstate == 0 && tempTime >= 10)
-            {
-                //tempTime = 0;
-                roundstate = 1;
-                PhotonNetwork.LocalPlayer.CustomProperties["roundState"] = roundstate;
-                //if (teamRound == player.P_GetTeam())
-                //{
-                    //diceSliderPanel.SetActive(false);
-                    //actionPointPanel.SetActive( true );
-                    player.P_RowDice(1);
-                //}
-            }
-            else if(roundstate == 0 && tempTime < 10)
-            {
-                //diceSliderPanel.SetActive(true);
-            }
-        }
-        
-        /*
-        if (roundstate == 1 && tempTime > 20)
-        {
-            //tempTime = 0;
-            roundstate = 0;
-            M_RoundUpdate();
-        }*/
-    }
-    public void UpdateTimer_()
-    {
-        tempTime += Time.deltaTime*2.0f;
-        if(tempTime >= 20.0f)
-        {
-            tempTime = 0.0f;
-            //M_RoundUpdate();
-        }
-        photonView.RPC("TimeUpdate", RpcTarget.All, tempTime);
-    }
     public void UpdateMinimap()
     {
-        //update minimap
-        //x: -145~-5, y: 5~145
-        //my icon
-        /*
-        int myIconX = -5+((int)player.transform.position.x)*10;
-        int myIconY = 5+((int)player.transform.position.z)*10;
-        if(myIconX < -145)
-        {
-            myIconX = -145;
-        }
-        else if(myIconX > -5)
-        {
-            myIconX = -5;
-        }
-        if(myIconY < 5)
-        {
-            myIconY = 5;
-        }
-        else if(myIconY > 145)
-        {
-            myIconY = 145;
-        }
-        
-        playerImgs[playerID-1].transform.position = new Vector3((float)myIconX, (float)myIconY, 0.0f);
-        */
-
         //update my position to others
         photonView.RPC("UpdatePositionToOthers", RpcTarget.All, 
             (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"],
@@ -432,44 +631,6 @@ public class GameManager : MonoBehaviour
         realPos.z = (float)((int)(iconPos.y - 5.0f/10.0f));
         return realPos;
     }
-    public void M_RoundUpdate_()
-    {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            round += 1;
-            if (teamRound == 1)
-            {
-                //Debug.Log("Round: "+round.ToString()+"change teamRound to 2.");
-                teamRound = 2;
-            }
-            else
-            {
-                //Debug.Log("Round: "+round.ToString()+"change teamRound to 1");
-                teamRound = 1;
-            }
-            photonView.RPC("TeamRoundUpdate", RpcTarget.All, teamRound, round);
-        }
-        round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
-        string newRoundText = "回合:"+((int)round).ToString();
-        teamRound = (int)PhotonNetwork.LocalPlayer.CustomProperties["teamRound"];
-        if (teamRound == playerTeam)
-        {
-            //my team's round
-            //diceSliderPanel.SetActive(true);
-            //Debug.Log("my team's round");
-            newRoundText += "\n(進攻)";
-        }
-        else
-        {
-            //not my team's round
-            player.P_SetActionPoint(0);
-            //actionPointPanel.SetActive(false);
-            //Debug.Log("not my team's round. my team: "+playerTeam.ToString()+", this round: "+teamRound.ToString());
-            newRoundText += "\n(防守)";
-        }
-        roundText.text = newRoundText;
-    }
-
     public void M_Movement(int dir)
     {
         Vector3 location = player.P_GetLocation();
