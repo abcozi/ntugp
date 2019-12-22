@@ -2,6 +2,12 @@
 NTU game programming project
 
 ## Updates:
+- 191222 ver:
+  - 遊戲流程完成
+  - 遊戲結束條件設定完成
+  - 遊戲結束畫面設定完成
+  - 玩家攻擊功能完成
+  - Hud新增比分
 - 191219 ver:
   - 回合修正完畢
   - 第五回合後顯示隊友於Hud
