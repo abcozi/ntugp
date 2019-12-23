@@ -116,6 +116,12 @@ public class BagItem : MonoBehaviour, IDragHandler, IDropHandler, IPointerDownHa
             if (times > 1 || player.P_GetItemList()[number - 1].GetTimes() > 1)
                 itemInfoPanel.transform.GetChild(1).Find("ItemInfoText").gameObject.GetComponent<Text>().text += "\n\n 可用次數:" + times;
         }
+        else if (transform.parent.name.Substring(12) == "Extra")
+        {
+            times = player.P_GetItemTimesList()[player.P_GetItemTimesList().Count - 1];
+            if (times > 1 || player.P_GetItemList()[player.P_GetItemList().Count - 1].GetTimes() > 1)
+                itemInfoPanel.transform.GetChild(1).Find("ItemInfoText").gameObject.GetComponent<Text>().text += "\n\n 可用次數:" + times;
+        }
             
         
         

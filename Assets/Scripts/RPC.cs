@@ -9,7 +9,8 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RPC : MonoBehaviour
 {
-	[PunRPC]
+
+    [PunRPC]
     void GameOver(int r1, int r2, int r3, int r4)
     {
     	PhotonNetwork.LocalPlayer.CustomProperties["gameOverF"] = true;
@@ -30,7 +31,8 @@ public class RPC : MonoBehaviour
     			//if i am attacked
     			Player myPlayer = GameObject.Find("Player"+id.ToString()).GetComponent<Player>();
     			myPlayer.P_SetDiceAmount(myPlayer.P_GetDiceAmount()-damage);
-    			Debug.Log("Got attacked: -"+damage.ToString()+" dices");
+    			Debug.Log("Got attacked: -"+damage.ToString()+" dices"); 
+                GameManager.gameManager.M_ShowInfo("遭受敵方攻擊，骰子數 - " + damage, 2, true);
     		}
     		catch(System.Exception ex)
     		{

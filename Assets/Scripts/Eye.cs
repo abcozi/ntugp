@@ -22,15 +22,15 @@ public class Eye : MonoBehaviour
 		ownerID = oID;
 		belongTeam = team;
 		eyeLocation = loc;
-		if((int)PhotonNetwork.LocalPlayer.CustomProperties["team"] == belongTeam)
-		{
-			changePlayerVisibility(oID, true);
-		}
-		else
-		{
-			changePlayerVisibility(oID, false);
-		}
-		eyeObject = (GameObject)Instantiate(Resources.Load(flagColors[belongTeam-1]+"Flag"), eyeLocation, Quaternion.identity);
+		//if((int)PhotonNetwork.LocalPlayer.CustomProperties[ownerID.ToString() + "team"] == belongTeam)
+		//{
+		//	changePlayerVisibility(oID, true);
+		//}
+		//else
+		//{
+		//	changePlayerVisibility(oID, false);
+		//}
+		eyeObject = (GameObject)Instantiate(Resources.Load("WhiteFlag"), eyeLocation, Quaternion.identity);
 		eyeObject.layer = LayerMask.NameToLayer("Eye");
         // Make a game object
         eyeLightObject = (GameObject)Instantiate(Resources.Load("Eye Light"), new Vector3(eyeLocation.x, 2.41671f, eyeLocation.z), Quaternion.identity);
@@ -45,16 +45,16 @@ public class Eye : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if(visibleToPlayers[(int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"]-1])
-        {
-        	eyeObject.SetActive(true);
-        	eyeLightObject.SetActive(true);
-        }
-        else
-        {
-        	eyeObject.SetActive(false);
-        	eyeLightObject.SetActive(false);
-        }
+        //if(visibleToPlayers[(int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"]-1])
+        //{
+        //	eyeObject.SetActive(true);
+        //	eyeLightObject.SetActive(true);
+        //}
+        //else
+        //{
+        //	eyeObject.SetActive(false);
+        //	eyeLightObject.SetActive(false);
+        //}
     }
 
     // Update is called once per frame
@@ -62,8 +62,21 @@ public class Eye : MonoBehaviour
     {
         
     }
+    public void Destroy()
+    {
+        Destroy(eyeLightObject);
+        Destroy(eyeObject);
+    }
     public void changePlayerVisibility(int pID, bool vis)
     {
     	visibleToPlayers[pID-1] = vis;
+    }
+    public int GetOwnerID()
+    {
+        return ownerID;
+    }
+    public Vector3 GetEyeLocation()
+    {
+        return eyeLocation;
     }
 }

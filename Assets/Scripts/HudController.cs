@@ -26,7 +26,9 @@ public class HudController : MonoBehaviour
 	private Text defenseValueTxt;
 	[SerializeField]
 	private Text skillValueText;
-	[SerializeField]
+    [SerializeField]
+    private Text EyeValueText;
+    [SerializeField]
 	private Text diceAmountTxt;
 	[SerializeField]
 	private Text actionPointTxt;
@@ -74,6 +76,7 @@ public class HudController : MonoBehaviour
             attackValueTxt.text = player.P_GetAttack().ToString();
             defenseValueTxt.text = player.P_GetDefense().ToString();
             skillValueText.text = player.P_GetSkill().ToString();
+            EyeValueText.text = player.P_GetWardAmountUnused().ToString();
             diceAmountTxt.text = player.P_GetDiceAmount().ToString();
             actionPointTxt.text = player.P_GetActionPoint().ToString();
             itemAmountTxt.text = player.P_GetItemListSize().ToString();
@@ -155,6 +158,7 @@ public class HudController : MonoBehaviour
     	attackValueTxt.text = player.P_GetAttack().ToString();
     	defenseValueTxt.text = player.P_GetDefense().ToString();
     	skillValueText.text = player.P_GetSkill().ToString();
+        EyeValueText.text = player.P_GetWardAmountUnused().ToString();
     	diceAmountTxt.text = player.P_GetDiceAmount().ToString();
     	actionPointTxt.text = player.P_GetActionPoint().ToString();
     	itemAmountTxt.text = player.P_GetItemListSize().ToString();

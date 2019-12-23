@@ -21,6 +21,7 @@ public class Player : MonoBehaviour
 		private members(attributes) 
 	*/
 	private int p_id;//player id
+    private int p_viewID;
     private string p_nickName;
 	private List<Item> p_items = new List<Item>();//item list of a player
     private List<int> p_itemsTimes = new List<int>();//the times item could be used list of a player
@@ -42,8 +43,7 @@ public class Player : MonoBehaviour
     private bool p_movingMode = false;//define if player is in moving mode
 	private int p_team;
     private int p_teamMate;
-    private int p_wardAmountTotal = 5;
-    private int p_wardAmountUnused = 5;
+    private int p_wardAmountUnused = 0;
     private int p_wardAmountUsed = 0;
     private List<Eye> wards = new List<Eye>();
     private PhotonView photonView;
@@ -76,11 +76,15 @@ public class Player : MonoBehaviour
         {
             anim = GetComponent<Animator>();    
         }
-        	}
+        if(photonView == null)
+        {
+            photonView = GetComponent<PhotonView>();
+        }
+        p_viewID = GetComponent<PhotonView>().ViewID;
+    }
     // Start is called before the first frame update
     void Start()
     {
-        photonView = GetComponent<PhotonView>();
         p_rigidBody = GetComponent<Rigidbody>();
         //if(photonView.IsMine)
         //{
@@ -112,13 +116,13 @@ public class Player : MonoBehaviour
                     p_view[i, j] = 0;
                 }
             }
-            anim.Play("WAIT04");
             //playerObj = gameObject;
         //}
             try
                 {
                     if(photonView.IsMine)
                     {
+                        playAnimation("WAIT04", p_id);
                         //photonView.RPC("TimeUpdate", RpcTarget.All, newTimerVal);
                         photonView.RPC("UpdateDefense", RpcTarget.All, p_id, p_defense);
                         photonView.RPC("UpdateAlive", RpcTarget.All, p_id, alive);
@@ -134,10 +138,10 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
-        //if(photonView.IsMine)
+
+        //if (photonView.IsMine)
         //{
-            if(moveLock == null)
+            if (moveLock == null)
             {
                 moveLock = false;
             }
@@ -160,23 +164,18 @@ public class Player : MonoBehaviour
                 //After walk animation, go back to wait.
                 //anim.Play("WAIT00", -1, 0f);
                 //Debug.Log("walk");
-                anim.Play("WALK");
-                P_Movement();
+                if (photonView.IsMine) { 
+                    playAnimation("WALK", p_id);
+                    P_Movement();
+                }
             }
-            else
+            else if (!Map.map.playerIsDoingSomething)
             {
-                anim.Play("WAIT00");
+                if (photonView.IsMine) {
+                    playAnimation("WAIT00", p_id);
+                }
             }
             
-            //press Space: put ward at current location
-            if(Input.GetKeyDown("space") && p_wardAmountUnused >= 1)
-            {
-                //check if able to put ward(ward amount >= 1)
-                P_PutWard(p_location);
-                wards.Add(new Eye(p_id, p_team, p_location));
-                p_wardAmountUnused -= 1;
-                p_wardAmountUsed += 1;
-            }
             try
                 {
                     if(photonView.IsMine)
@@ -186,20 +185,21 @@ public class Player : MonoBehaviour
                         photonView.RPC("UpdateAlive", RpcTarget.All, p_id, alive);
                         photonView.RPC("UpdateDA", RpcTarget.All, p_id, p_diceAmount);
                     }
+                    
                 }
                 catch(System.Exception ex)
                 {
                     Debug.Log(ex.ToString());
                 }
                 AttackAtempt();
-        //} 
-        //else if(Input.GetKeyDown(KeyCode.Q) && )
-        
+        //}
+
     }
     public void AttackAtempt()
     {
-        if(Input.GetKeyDown(KeyCode.Z))
+        if(Input.GetKeyDown(KeyCode.Z) && photonView.IsMine)
         {
+            int attackNum = 0;
             //attack rivals
             for(int i = 1 ; i <= 4 ; i ++)
             {
@@ -209,35 +209,56 @@ public class Player : MonoBehaviour
                 }
                 else
                 {
-                    //rivals
-                    Vector3 rivLoc = (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer"+i.ToString()];
-                    Vector3 myLoc = p_location;
-                    if(Vector3.Distance(rivLoc, myLoc) <= Vector3.Distance(new Vector3(0, 0, 0), new Vector3(2, 2, 0)))
+                    try
                     {
-                        //attack
-                        int rivDef = (int)PhotonNetwork.LocalPlayer.CustomProperties["def"+i.ToString()];
-                        bool rivalAlive = (bool)PhotonNetwork.LocalPlayer.CustomProperties["alive"+i.ToString()];
-                        bool quota = (bool)PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"];
-                        if(rivDef < p_attack && rivalAlive && quota)
+                        //rivals
+                        Vector3 rivLoc = (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer" + i.ToString()];
+                        Vector3 myLoc = p_location;
+                        if (Vector3.Distance(rivLoc, myLoc) <= Vector3.Distance(new Vector3(0, 0, 0), new Vector3(2, 0, 2)))
                         {
-                            try
-                            {  
+                            attackNum++;
+                            //attack
+                            int rivDef = (int)PhotonNetwork.LocalPlayer.CustomProperties["def" + i.ToString()];
+                            bool rivalAlive = (bool)PhotonNetwork.LocalPlayer.CustomProperties["alive" + i.ToString()];
+                            bool quota = (bool)PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"];
+                            if (rivDef < p_attack && rivalAlive && quota)
+                            {
+
                                 Debug.Log("attack rival");
                                 photonView.RPC("AttackRivals", RpcTarget.All, i, p_attack - rivDef);
+                                PhotonNetwork.Instantiate("VFX/GotAttackVFX", new Vector3(rivLoc.x, 1.0f, rivLoc.z), Quaternion.identity, 0);
+                                GameManager.gameManager.M_ShowInfo("成功攻擊敵人，敵人骰子數 - " + (p_attack - rivDef).ToString());
                                 PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = false;
+
                             }
-                            catch(System.Exception ex)
+                            else if (rivDef >= p_attack && rivalAlive && quota)
                             {
-                                Debug.Log(ex.ToString());
+                                GameManager.gameManager.M_ShowInfo("攻擊力不足");
                             }
+                            else if (rivDef < p_attack && rivalAlive && !quota)
+                            {
+                                if(GameManager.gameManager.M_GetTeamRound() == GameManager.gameManager.M_GetRound())
+                                    GameManager.gameManager.M_ShowInfo("攻擊冷卻中");
+                                else
+                                    GameManager.gameManager.M_ShowInfo("防守狀態無法攻擊");
+                            }
+
+
+                        }
+                        else
+                        {
+                            //not attack
                         }
                     }
-                    else
+                    catch (System.Exception ex)
                     {
-                        //not attack
+                        Debug.Log(ex.ToString());
                     }
                 }
             }
+            if(attackNum == 0)
+                GameManager.gameManager.M_ShowInfo("周圍沒有敵人", 1, false);
+
         }
     }
     /*
@@ -499,6 +520,14 @@ public class Player : MonoBehaviour
     {
     	p_wardLocations = wardLocations;
     }
+    public List<Eye> P_GetWards()
+    {
+        return wards;
+    }
+    public void P_SetWards(List<Eye> wards)
+    {
+        this.wards = wards;
+    }
     public int P_GetActionPoint()
     {
     	return p_actionPoint;
@@ -592,6 +621,32 @@ public class Player : MonoBehaviour
     public int GetUsedDiceAmount()
     {
         return usedDiceAmount;
+    }
+     public int P_GetWardAmountUnused()
+    {
+        return p_wardAmountUnused;
+    }
+    public void P_SetWardAmountUnused(int wardAmountUnused)
+    {
+        p_wardAmountUnused = wardAmountUnused;
+    }
+    public int P_GetWardAmountUsed()
+    {
+        return p_wardAmountUsed;
+    }
+    public void P_SetWardAmountUsed(int wardAmountUsed)
+    {
+        p_wardAmountUsed = wardAmountUsed;
+    }
+    public void playAnimation(string animation, int p_id)
+    {
+        if (this.p_id == p_id)
+            photonView.RPC("playAnimationRPC", RpcTarget.All, animation, p_viewID);
+    }
+    [PunRPC]
+    void playAnimationRPC(string animation, int p_viewID)
+    {
+        PhotonView.Find(p_viewID).gameObject.GetComponent<Animator>().Play(animation);
     }
 }   
 

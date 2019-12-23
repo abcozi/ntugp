@@ -30,6 +30,8 @@ public class GameManager : MonoBehaviour
     private GameObject infoText, infoImage, infoBackGroundPanel, infoCanvas;
     private List<Tuple<string, int>> itemEffectRound;
     private int roundPre;
+    public GameObject usingItemVFX;
+    private GameObject vfxObj;
     [SerializeField]
     private Text timerText;
     [SerializeField]
@@ -243,13 +245,18 @@ public class GameManager : MonoBehaviour
                     //Debug.Log("timer: "+((int)tempTime).ToString());
                     UpdateTimerRoundText();
                 }
+                if(vfxObj != null)
+        		{
+            		vfxObj.GetComponent<Transform>().position = new Vector3(player.P_GetLocation().x - 0.04f, 2.5f, player.P_GetLocation().z);
+        		}
+                
             }
             catch(System.Exception ex)
             {
                 Debug.Log(ex.ToString());
             }
 
-        
+
     }
     /*----------------------------  Custom Methods  ---------------------------*/
     public void GameOver(int t1s, int t2s)
@@ -779,7 +786,7 @@ public class GameManager : MonoBehaviour
     *purpose:使用技能
     * param:itemID:道具名稱
     */
-    public void M_UsingItem(string itemID, int removeID)
+public void M_UsingItem(string itemID, int removeID)
     {
         bool itemRemove = true;
         switch (itemID)
@@ -808,7 +815,7 @@ public class GameManager : MonoBehaviour
 
                 break;
 
-            case "purpleE"://存在於背包中即有效果，可以向當前面對方向增加一格視野
+            case "purpleE"://存在於背包中即有效果，視野距離擴大
 
                 M_ShowInfo("不需要使用，存在於背包中即有效果。", 1);
                 itemRemove = false;
@@ -873,6 +880,14 @@ public class GameManager : MonoBehaviour
 
             case "blueF"://可使用三次，可偵測並清除九宮格範圍之敵對眼。
 
+                if (round >= 5)
+                    map.S_UsingDetectEyeItem(true);
+                else
+                {
+                    M_ShowInfo("目前的回合無法使用該道具", 1);
+                    itemRemove = false;
+                }
+
                 break;
 
             case "blueG"://可使用一次，可砍伐樹木。
@@ -915,6 +930,14 @@ public class GameManager : MonoBehaviour
 
             case "greenE"://可使用一次，清除九宮格範圍內所有敵對眼。
 
+                if (round >= 5)
+                    map.S_UsingDetectEyeItem(true);
+                else
+                {
+                    M_ShowInfo("目前的回合無法使用該道具", 1);
+                    itemRemove = false;
+                }
+                    
                 break;
 
             case "whiteA"://可使用一次，三回合內攻擊力提升2點，可疊加。
@@ -929,13 +952,21 @@ public class GameManager : MonoBehaviour
                 itemEffectRound.Add(Tuple.Create("whiteB", 3));
                 break;
 
-            case "whiteC"://可使用一次，此回合可以向當前面對方向增加一格視野距離。
+            case "whiteC"://可使用一次，此回合視野距離擴大。
 
-
+                map.S_SetLightRange(true);
+                itemEffectRound.Add(Tuple.Create("whiteC", 1));
                 break;
 
             case "whiteD"://可使用一次，可得九宮格範圍之內是否有眼存在。
 
+                if (round >= 5)
+                    map.S_UsingDetectEyeItem(false);
+                else
+                {
+                    M_ShowInfo("目前的回合無法使用該道具", 1);
+                    itemRemove = false;
+                }
 
                 break;
 
@@ -954,14 +985,16 @@ public class GameManager : MonoBehaviour
 
             default:
 
-                //Debug.LogError("道具參數有誤或是未包含全部道具的實作");
+                Debug.LogError("道具參數有誤或是未包含全部道具的實作");
                 break;
 
         }
         //道具使用成功則從背包中移除
         if (itemRemove)
         {
-            if(player.P_GetItemTimesList()[removeID] > 1)
+            usingItemVFX.GetComponent<ParticleSystem>().GetComponent<Renderer>().material = (Material)Resources.Load("Item/Material/" + itemID);
+            vfxObj = Instantiate(usingItemVFX, new Vector3(player.P_GetLocation().x -0.04f, 2.5f, player.P_GetLocation().z), Quaternion.identity);
+            if (player.P_GetItemTimesList()[removeID] > 1)
             {
                 List<int> tempTimesList = player.P_GetItemTimesList();
                 tempTimesList[removeID] -= 1;
@@ -1027,9 +1060,14 @@ public class GameManager : MonoBehaviour
                 player.P_SetDefense(player.P_GetDefense() - 3);
                 break;
 
+            case "whiteC"://可使用一次，此回合視野距離擴大。
+
+                map.S_SetLightRange(false);
+                break;
+
             default:
 
-                //Debug.LogError("道具參數有誤或是未包含全部道具的實作");
+                Debug.LogError("道具參數有誤或是未包含全部道具的實作");
                 break;
 
         }
@@ -1054,4 +1092,7 @@ public class GameManager : MonoBehaviour
         if(anyItemNoEffect)
             M_ShowInfo(noEffectItems + " 道具效果已失效");
     }
+
+    
 }
+

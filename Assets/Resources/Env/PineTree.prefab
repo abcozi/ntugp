@@ -120,6 +120,46 @@ PrefabInstance:
       propertyPath: m_Name
       value: co_PineTree
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100004, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100004, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100008, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100008, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -175,6 +215,10 @@ PrefabInstance:
     - target: {fileID: 400000, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}
+      propertyPath: m_FadeMode
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4ac1a66b4528d432f8cd87cc549d3a17, type: 3}

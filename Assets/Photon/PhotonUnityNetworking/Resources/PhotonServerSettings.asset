@@ -70,5 +70,8 @@ MonoBehaviour:
   - UpdateDefense
   - UpdateDA
   - GameOver
+  - EyeBeDetected
+  - playAnimationRPC
+  - TeamAddWardRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0

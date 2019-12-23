@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Photon.Pun;
 using UnityEngine.UI;
 using UnityEngine.Networking;
-
+using System.Linq;
 
 public class Map : MonoBehaviour
 {
@@ -12,7 +12,9 @@ public class Map : MonoBehaviour
     //gridObj:初始化(生成)prefab的2維array
     //mapSize:地圖邊長
 
-    private int seed = 0;
+    public static Map map;
+    private int mutualSeed = 0, individualSeed = 0;
+    private Random.State oldStateMutual, oldStateIndividual;
     private int[,] grassGrid, waterGrid, emptyGrid, isolatedGrid, portalGrid, puddleGrid, trapGrid, treeGrid, reedGrid, barrenGrid, storeGrid, triggeredGrid;
     private Item[,] itemGrid;
     private List<Item> itemList, purpleItemList, blueItemList, greenItemList, whiteItemList;
@@ -33,6 +35,7 @@ public class Map : MonoBehaviour
     private GameObject bagCanvas, bagPanel;
     private GameObject[] storeItemObj, bagItemObj;
     private bool inStore = false, onTrap = false, onPuddle = false, inReed = false, onWater = false, confirm = false;
+    public bool playerIsDoingSomething { get; set; }
     private int[,] chopTreeLock , fetchItemLock;
     private int fetchItemI, fetchItemJ;
     private Dictionary<string, int> barrenRecoverRound, portalRecoverRound;
@@ -50,6 +53,7 @@ public class Map : MonoBehaviour
     private int[,] itemSoldOutGrid;
     private int playerIDNum = 4;
     private bool resetStoreItem = false;
+    private bool eyeNumPlusOne = false;
     private PlayerInfo playerInfo;
     private Dictionary<int, PlayerInfo> playersInfo;
     public CursorMode cursorMode = CursorMode.Auto;
@@ -60,16 +64,27 @@ public class Map : MonoBehaviour
     private Vector2 initBagRect = new Vector2(-365, 148), chooseItemToDiscardRect = new Vector2(10, 84);
     public bool isChoosingItemToDiscard{ get; set; }
     public bool isArbitrarilyDiscard { get; set; }
+    private bool onTrapOrPuddleMove = false;
+    private List<Vector3> AllDetectEyeLocations, AllDetectEyeLocationsPre;
+    private List<GameObject> AllDetectEyeObject;
+    private GameObject pointLight;
+    private bool addLightRange = false;
 
     //barren = 0, grass = 1, puddle = 2, reed = 3, trap = 4, tree = 5, portal = 6,  water = 7, store = 8, isolated grass = 100
     //initialization
     private void Awake()
-    {
-        seed = Global.seed;
-        Random.InitState(seed);
+    {    
+        if (map == null)
+        {
+            map = this;
+        }
     }
     void Start()
     {
+        string timeStamp = PhotonNetwork.ServerTimestamp.ToString();
+        timeStamp = timeStamp.Substring(1, 2);
+        mutualSeed = (PhotonNetwork.CurrentRoom.Name + timeStamp).GetHashCode();
+        Random.InitState(mutualSeed);
         //initialize each variable
         photonView = GetComponent<PhotonView>();
         playersInfo = new Dictionary<int, PlayerInfo>();
@@ -94,7 +109,7 @@ public class Map : MonoBehaviour
         bagItemObj = new GameObject[bagItemNum + 1];
         InitItem();
         isArbitrarilyDiscard = false;
-
+        playerIsDoingSomething = false;
 
         itemList = new List<Item> { purpleA, purpleB, purpleC, purpleD, purpleE, purpleF, blueA, blueB, blueC, blueD, blueE, blueF, blueG
                                                                 ,greenA, greenB, greenC, greenD, greenE, whiteA, whiteB, whiteC, whiteD, whiteE};
@@ -108,6 +123,11 @@ public class Map : MonoBehaviour
 
         barrenRecoverRound = new Dictionary<string, int>();
         portalRecoverRound = new Dictionary<string, int>();
+
+        AllDetectEyeLocations = new List<Vector3>();
+        AllDetectEyeLocationsPre = new List<Vector3>();
+
+        AllDetectEyeObject = new List<GameObject>();
 
         //生成各種地形與道具
         CreateMap();
@@ -129,7 +149,7 @@ public class Map : MonoBehaviour
         //定期更新地形table
         SaveToTerrain();
         GetObject();
-        photonView.RPC("UpdatePlayers", RpcTarget.All, playerID, player.P_GetNickName(), (int)player.P_GetLocation().x, (int)player.P_GetLocation().z);
+        photonView.RPC("UpdatePlayers", RpcTarget.All, playerID, player.P_GetNickName(), (int)player.P_GetLocation().x, (int)player.P_GetLocation().z,  player.P_GetWardLocations().ToArray(), player.P_GetTeamMate());
         //foreach (KeyValuePair<int, int> playerViewID in playersViewID)
         //{
         //    Debug.LogError(playerViewID.Key);
@@ -137,18 +157,26 @@ public class Map : MonoBehaviour
         //}
 
         //取得回合
-        if (gameManager.M_GetTeamRound() == player.P_GetTeam()
-            || gameManager.M_GetRound() <= 4)
+        if (gameManager.M_GetTeamRound() == player.P_GetTeam())
         {
             //my team's round
             myRound = true;
-            //Debug.Log("myround true");
+            foreach(GameObject obj in gridItemObj)
+            {
+                if(obj != null)
+                    obj.GetComponent<BoxCollider>().enabled = true;
+            }
+
         }
         else
         {
             //not my team's round
             myRound = false;
-            //Debug.Log("myround false");
+            foreach (GameObject obj in gridItemObj)
+            {
+                if (obj != null)
+                    obj.GetComponent<BoxCollider>().enabled = false;
+            }
         }
 
         //當使用者點擊
@@ -355,16 +383,17 @@ public class Map : MonoBehaviour
             }
         }
 
-        if (roundPre != gameManager.M_GetRound())//**
+        if (roundPre != gameManager.M_GetRound())
         {
+            onTrapOrPuddleMove = true;
             UpdateBarrenState();
             UpdatePortalState();
             ResetFetchItemPanel();
             resetStoreItem = false;
+            eyeNumPlusOne = false;
             if (!isfetchingItem)
-            {
                 player.P_SetMoveLock(false);
-            }
+
             ForceMouseOn();
             roundPre = gameManager.M_GetRound();
         }
@@ -459,11 +488,15 @@ public class Map : MonoBehaviour
             }
             else
             {
-                for (int i = 0; i < storeItemNum; i++)
+                if (itemSoldOutGrid != null)
                 {
-                    if (itemSoldOutGrid[inStoreNum, i] == 1)
-                    {
-                        storeItemObj[i].transform.Find("SoldOutItem" + (i + 1).ToString()).gameObject.SetActive(true);
+                    for (int i = 0; i < storeItemNum; i++)
+                    {          
+                        if (itemSoldOutGrid[inStoreNum, i] == 1)
+                        {
+                            storeItemObj[i].transform.Find("SoldOutItem" + (i + 1).ToString()).gameObject.SetActive(true);
+                        }
+                    
                     }
                 }
             }
@@ -475,7 +508,8 @@ public class Map : MonoBehaviour
             int transferI = S_GetTransferLocation(playerLocationI, playerLocationJ).Item1, transferJ = S_GetTransferLocation(playerLocationI, playerLocationJ).Item2;
             if (transferI != -1 && transferJ != -1)
             {
-                photonView.RPC("UpdatePortalStatus", RpcTarget.All, playerLocationI, playerLocationJ, transferI, transferJ);  
+                photonView.RPC("UpdatePortalStatus", RpcTarget.All, playerLocationI, playerLocationJ, transferI, transferJ);
+                playerIsDoingSomething = true;
                 player.P_SetMoveLock(true);
                 gameManager.M_ShowInfo("傳送中", 1);
                 StartCoroutine(ReleaseMoveLock());
@@ -484,6 +518,7 @@ public class Map : MonoBehaviour
                     yield return new WaitForSeconds(1);
                     player.P_SetLocation(new Vector3(transferI, 0, transferJ));
                     player.P_SetMoveLock(false);
+                    playerIsDoingSomething = false;
                 }
             }
 
@@ -494,6 +529,12 @@ public class Map : MonoBehaviour
         {
             CreateStoreItem();
             resetStoreItem = true;
+        }
+
+        if (gameManager.M_GetRound() % 5 == 0 && eyeNumPlusOne == false)
+        {
+            player.P_SetWardAmountUnused(player.P_GetWardAmountUnused() + 1);
+            eyeNumPlusOne = true;
         }
 
         if (confirmBackGroundPanel.activeSelf)
@@ -515,6 +556,64 @@ public class Map : MonoBehaviour
         {
             PauseArbitrarilyDisCard();
         }
+
+        if (!AllDetectEyeLocations.SequenceEqual(AllDetectEyeLocationsPre))
+        {
+            if(AllDetectEyeObject.Count > 0)
+            {
+                for(int i = AllDetectEyeObject.Count - 1; i >= 0; i--)
+                {
+                    Destroy(AllDetectEyeObject[i]);
+                    AllDetectEyeObject.RemoveAt(i);
+                }
+            }
+            foreach(Vector3 v in AllDetectEyeLocations)
+            {
+                AllDetectEyeObject.Add((GameObject)Instantiate(Resources.Load("BlackFlag"), v, Quaternion.identity));
+            }
+            AllDetectEyeLocationsPre = new List<Vector3>(AllDetectEyeLocations);
+        }
+
+        bool containFlashLight = false;
+        foreach (Item i in player.P_GetItemList())
+        {
+            if (i.GetID() == "purpleE")
+            {
+                containFlashLight = true;
+            }
+        }
+        if (containFlashLight && !addLightRange)
+        {
+            addLightRange = true;
+            S_SetLightRange(true);
+        }
+        else if(!containFlashLight && addLightRange)
+        {
+            addLightRange = false;
+            S_SetLightRange(false);
+        }
+
+        if (gameManager.M_GetRound() == 5)
+        {
+            foreach (KeyValuePair<int, PlayerInfo> playerInfo in playersInfo)
+            {
+                if (playerInfo.Key == player.P_GetTeamMate())
+                {
+                    foreach (Vector3 v in playerInfo.Value.WardLocations)
+                    {
+                        if (!player.P_GetWardLocations().Contains(v))
+                        {
+                            player.P_PutWard(v);
+                            List<Eye> temp = new List<Eye>(player.P_GetWards());
+                            temp.Add(new Eye(playerID, player.P_GetTeam(), v));
+                            player.P_SetWards(temp);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
     }
     [PunRPC]
     private void UpdatePortalStatus(int playerLocationI, int playerLocationJ, int transferI, int transferJ)
@@ -542,8 +641,9 @@ public class Map : MonoBehaviour
         if (trapGrid[i, j] == 1)
         {
             photonView.RPC("UpdateStepOnTheTrapMap", RpcTarget.All, i, j);
-            player.P_SetMoveLock(true);
             player.P_SetActionPoint(0);
+            player.P_SetMoveLock(true);
+
             gameManager.M_ShowInfo("踩到陷阱", 3, true);
         }
     }
@@ -582,6 +682,7 @@ public class Map : MonoBehaviour
         {
             yield return new WaitForSeconds(1);
             player.P_SetMoveLock(false);
+            onTrapOrPuddleMove = true;
         }
     }
     /*
@@ -593,6 +694,10 @@ public class Map : MonoBehaviour
         isfetchingItem = true;
         StartCoroutine(Fetch());
         player.P_SetMoveLock(true);
+        playerIsDoingSomething = true;
+        PlayerFacing(i, j, (int)player.P_GetLocation().x, (int)player.P_GetLocation().z);
+        player.playAnimation("Gathering", playerID);
+
         IEnumerator Fetch()
         {
             photonView.RPC("SetFetchItemLock", RpcTarget.All, i, j);
@@ -603,6 +708,7 @@ public class Map : MonoBehaviour
                 yield return new WaitForSeconds(1);
             }
             player.P_SetMoveLock(false);
+            playerIsDoingSomething = false;
             photonView.RPC("UpdateFetchBarrenMap", RpcTarget.All, i, j);
             isfetchingItem = false;
             ForceMouseOn();
@@ -697,12 +803,25 @@ public class Map : MonoBehaviour
             //Debug.LogError(playerInfo.Value.locationJ);
             //Debug.LogError(i);
             //Debug.LogError(j);
-            if (playerInfo.Value.locationI == i && playerInfo.Value.locationJ == j && playerInfo.Key != playerID)
+            if(gameManager.M_GetRound() >= 5)
             {
-                gameManager.M_ShowInfo("搜索出敵人 : " + playerInfo.Value.nickName);
-                searchOtherPlayer = true;
-                beSearchedList[playerInfo.Key] = 1;
+                if (playerInfo.Value.locationI == i && playerInfo.Value.locationJ == j && playerInfo.Key != playerID && playerInfo.Key != player.P_GetTeamMate())
+                {
+                    gameManager.M_ShowInfo("搜索出敵人 : " + playerInfo.Value.nickName);
+                    searchOtherPlayer = true;
+                    beSearchedList[playerInfo.Key] = 1;
+                }
             }
+            else
+            {
+                if (playerInfo.Value.locationI == i && playerInfo.Value.locationJ == j && playerInfo.Key != playerID)
+                {
+                    gameManager.M_ShowInfo("搜索出玩家 : " + playerInfo.Value.nickName);
+                    searchOtherPlayer = true;
+                    beSearchedList[playerInfo.Key] = 1;
+                }
+            }
+            
         }
 
         photonView.RPC("BeSearched", RpcTarget.All, beSearchedList);
@@ -710,6 +829,42 @@ public class Map : MonoBehaviour
         {
             gameManager.M_ShowInfo("沒有搜索到任何人", 1);
         }
+    }
+    public void S_UsingDetectEyeItem(bool removeEye)
+    {
+        bool detectEnemyEye = false;
+        int[] beSearchedList = new int[playerIDNum + 1];
+        List<Vector3> beDetectedEye = new List<Vector3>();
+        foreach (KeyValuePair<int, PlayerInfo> playerInfo in playersInfo)
+        {
+            if(playerInfo.Key != playerID && playerInfo.Key != player.P_GetTeamMate())
+            {
+                foreach (Vector3 v in playerInfo.Value.WardLocations)
+                {
+                    if (Surrounding((int)player.P_GetLocation().x, (int)player.P_GetLocation().z, (int)v.x, (int)v.z))
+                    {
+                        detectEnemyEye = true;
+                        beDetectedEye.Add(v);
+                        beSearchedList[playerInfo.Key] = 1;
+                        beSearchedList[playerInfo.Value.teamMate] = 1;
+                    }
+                }
+                break;
+            } 
+        }
+        if (detectEnemyEye)
+        {
+            if(removeEye)
+                gameManager.M_ShowInfo("清除敵方設置的 " + beDetectedEye.Count + " 個眼");
+            else
+                gameManager.M_ShowInfo("偵測出敵方設置的 " + beDetectedEye.Count + " 個眼");
+            photonView.RPC("EyeBeDetected", RpcTarget.All, beSearchedList, beDetectedEye.ToArray(), removeEye);
+        }
+        else
+        {
+            gameManager.M_ShowInfo("沒有偵測到任何敵方所設置的眼", 1);
+        }
+        
     }
     /*
     purpose:過數個回合後，被採集的土壤恢復
@@ -736,6 +891,7 @@ public class Map : MonoBehaviour
         }
         else if (treeGrid[frontI, frontJ] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
         {
+            playerIsDoingSomething = true;
             photonView.RPC("SetChopTreeLock", RpcTarget.All, frontI, frontJ);
             player.P_SetMoveLock(true);
             StartCoroutine(Chop());
@@ -745,10 +901,14 @@ public class Map : MonoBehaviour
                 {
                     int times = x % 3 + 1;
                     gameManager.M_ShowInfo("砍伐中" + new string('.', times), 1);
-                    yield return new WaitForSeconds(1);
+                    PhotonNetwork.Instantiate("VFX/ChopTreeVFX", new Vector3(frontI, 1.0f, frontJ), Quaternion.identity, 0);
+                    yield return new WaitForSeconds(0.5f);
+                    PhotonNetwork.Instantiate("VFX/ChopTreeVFX", new Vector3(frontI, 1.0f, frontJ), Quaternion.identity, 0);
+                    yield return new WaitForSeconds(0.5f);
                 }
                 photonView.RPC("UpdateTreeMap", RpcTarget.All, frontI, frontJ);
                 player.P_SetMoveLock(false);
+                playerIsDoingSomething = false;
                 int randomResult = Random.Range(0, 100);
                 if (randomResult < 80)
                 {
@@ -823,6 +983,7 @@ public class Map : MonoBehaviour
             }
             else
             {
+                playerIsDoingSomething = true;
                 player.P_SetMoveLock(true);
                 StartCoroutine(Create());
                 IEnumerator Create()
@@ -835,6 +996,7 @@ public class Map : MonoBehaviour
                     }
                     photonView.RPC("CreateUpdatePortalMap", RpcTarget.All, frontI, frontJ, playerID);
                     player.P_SetMoveLock(false);
+                    playerIsDoingSomething = false;
                 }
                 return true;
             }
@@ -980,6 +1142,7 @@ public class Map : MonoBehaviour
             i = Random.Range(0, mapSize);
             j = Random.Range(0, mapSize);
         }
+        playerIsDoingSomething = true;
         player.P_SetMoveLock(true);
         gameManager.M_ShowInfo("傳送中", 1);
         StartCoroutine(ReleaseMoveLock());
@@ -987,6 +1150,7 @@ public class Map : MonoBehaviour
         {
             yield return new WaitForSeconds(1);
             player.P_SetMoveLock(false);
+            playerIsDoingSomething = false;
             player.P_SetLocation(new Vector3(i, 0, j));
             if (reedGrid[i , j] == 1)
             {
@@ -996,6 +1160,22 @@ public class Map : MonoBehaviour
             }
             
         }
+    }
+    public void S_SetLightRange(bool add)
+    {
+        if (pointLight == null)
+        {
+            pointLight = GameObject.Find("Point Light").gameObject;
+        }
+        if (add)
+        {
+            pointLight.GetComponent<Light>().range = pointLight.GetComponent<Light>().range + 0.3f;
+        }
+        else
+        {
+            pointLight.GetComponent<Light>().range = pointLight.GetComponent<Light>().range - 0.3f;
+        }
+
     }
     private void CreateMap()
     {
@@ -1012,7 +1192,7 @@ public class Map : MonoBehaviour
         CreateTrap();
         CreateTree();
         CreateReed();
-        CreateBarren();
+        //CreateBarren();
         CreateStore();
         CreateItem();
         CreateOuterGrass();
@@ -1076,7 +1256,11 @@ public class Map : MonoBehaviour
     public void BuyItem(int itemNum)
     {
         int price = int.Parse(storeItemObj[itemNum - 1].transform.Find("Price" + (itemNum).ToString()).GetComponent<Text>().text);
-        if (player.P_GetDiceAmount() > price)
+        if (isChoosingItemToDiscard)
+        {
+            //do nothing
+        }
+        else if (player.P_GetDiceAmount() > price)
         {
             player.P_SetDiceAmount(player.P_GetDiceAmount() - price);
             foreach (Item i in itemList)
@@ -1185,39 +1369,40 @@ public class Map : MonoBehaviour
     //初始化道具
     private void InitItem()
     {
-        purpleA = new Item("purpleA", "PurpleA", "PurpleA", "可使用一次，兩回合內攻擊力提升10點，可疊加。", "purple", 5, 1);
-        purpleB = new Item("purpleB", "PurpleB", "PurpleB", "可使用一次，兩回合內防禦力提升10點，可疊加。", "purple", 5, 1);
-        purpleC = new Item("purpleC", "PurpleC", "PurpleC", "可使用一次，永久使攻擊力提升5點，可疊加。", "purple", 5, 1);
-        purpleD = new Item("purpleD", "PurpleD", "PurpleD", "可使用一次，永久使防禦力提升5點，可疊加。", "purple", 5, 1);
-        purpleE = new Item("purpleE", "PurpleE", "PurpleE", "存在於背包中即有效果，可以向當前面對方向增加一格視野距離，不可疊加。", "purple", 5, 1);
-        purpleF = new Item("purpleF", "PurpleF", "PurpleF", "可使用一次，將該回合可用的行動點數變為三倍。", "purple", 5, 1);
+        purpleA = new Item("purpleA", "阿給摩那之血", "PurpleA", "可使用一次，兩回合內攻擊力提升10點，可疊加。", "purple", 5, 1);
+        purpleB = new Item("purpleB", "薩魯瓦之淚", "PurpleB", "可使用一次，兩回合內防禦力提升10點，可疊加。", "purple", 5, 1);
+        purpleC = new Item("purpleC", "聖火之杖", "PurpleC", "可使用一次，永久使攻擊力提升5點，可疊加。", "purple", 5, 1);
+        purpleD = new Item("purpleD", "哉里沙的肩胛骨", "PurpleD", "可使用一次，永久使防禦力提升5點，可疊加。", "purple", 5, 1);
+        purpleE = new Item("purpleE", "伽那估梅爾估的右眼", "PurpleE", "存在於背包中即有效果，視野距離擴大，不可疊加。", "purple", 5, 1);
+        purpleF = new Item("purpleF", "忉威的邪酒", "PurpleF", "可使用一次，將該回合可用的行動點數變為三倍。", "purple", 5, 1);
 
-        blueA = new Item("blueA", "BlueA", "BlueA", "可使用一次，三回合內攻擊力提升5點，可疊加。", "blue", 4, 1);
-        blueB = new Item("blueB", "BlueB", "BlueB", "可使用一次，三回合內防禦力提升5點，可疊加。", "blue", 4, 1);
-        blueC = new Item("blueC", "BlueC", "BlueC", "可使用一次，在地上創造傳送門。", "blue", 4, 1);
-        blueD = new Item("blueD", "BlueD", "BlueD", "存在於背包中即有效果，可以藉此道具在水上行動。", "blue", 4, 1);
-        blueE = new Item("blueE", "BlueE", "BlueE", "可使用一次，隨機移動到地圖上任何一個地方。", "blue", 4, 1);
-        blueF = new Item("blueF", "BlueF", "BlueF", "可使用三次，可偵測並清除九宮格範圍之敵對眼。", "blue", 4, 3);
-        blueG = new Item("blueG", "BlueG", "BlueG", "可使用一次，可砍伐樹木。", "blue", 4, 1);
+        blueA = new Item("blueA", "強效肌力強化劑", "BlueA", "可使用一次，三回合內攻擊力提升5點，可疊加。", "blue", 4, 1);
+        blueB = new Item("blueB", "強效治療藥膏", "BlueB", "可使用一次，三回合內防禦力提升5點，可疊加。", "blue", 4, 1);
+        blueC = new Item("blueC", "聖殿之門", "BlueC", "可使用一次，在地上創造傳送門。", "blue", 4, 1);
+        blueD = new Item("blueD", "口袋式小舟", "BlueD", "存在於背包中即有效果，可以藉此道具在水上行動。", "blue", 4, 1);
+        blueE = new Item("blueE", "某神掉落的指環", "BlueE", "可使用一次，隨機移動到地圖上任何一個地方。", "blue", 4, 1);
+        blueF = new Item("blueF", "偵查雷達", "BlueF", "可使用三次，可偵測並清除九宮格範圍之敵對眼。", "blue", 4, 3);
+        blueG = new Item("blueG", "某種骨頭制的手斧", "BlueG", "可使用一次，可砍伐樹木。", "blue", 4, 1);
 
-        greenA = new Item("greenA", "GreenA", "GreenA", "可使用一次，永久使攻擊力提升1點，可疊加。", "green", 3, 1);
-        greenB = new Item("greenB", "GreenB", "GreenB", "可使用一次，永久使攻擊力提升2點，可疊加。", "green", 3, 1);
-        greenC = new Item("greenC", "GreenC", "GreenC", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3, 1);
-        greenD = new Item("greenD", "GreenD", "GreenD", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3, 1);
-        greenE = new Item("greenE", "GreenE", "GreenE", "可使用一次，清除九宮格範圍內所有敵對眼。", "green", 3, 1);
+        greenA = new Item("greenA", "哈桑的匕首", "GreenA", "可使用一次，永久使攻擊力提升1點，可疊加。", "green", 3, 1);
+        greenB = new Item("greenB", "大馬士革刀", "GreenB", "可使用一次，永久使攻擊力提升2點，可疊加。", "green", 3, 1);
+        greenC = new Item("greenC", "馬其頓的小圓盾", "GreenC", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3, 1);
+        greenD = new Item("greenD", "大流士的皮甲", "GreenD", "可使用一次，永久使防禦力提升1點，可疊加。", "green", 3, 1);
+        greenE = new Item("greenE", "快沒電的偵察雷達", "GreenE", "可使用一次，清除九宮格範圍內所有敵對眼。", "green", 3, 1);
 
-        whiteA = new Item("whiteA", "WhiteA", "WhiteA", "可使用一次，三回合內攻擊力提升2點，可疊加。", "green", 2, 1);
-        whiteB = new Item("whiteB", "WhiteB", "WhiteB", "可使用一次，二回合內防禦力提升3點，可疊加。", "green", 2, 1);
-        whiteC = new Item("whiteC", "WhiteC", "WhiteC", "可使用一次，此回合可以向當前面對方向增加一格視野距離。", "green", 2, 1);
-        whiteD = new Item("whiteD", "WhiteD", "WhiteD", "可使用一次，可使用一次，可得九宮格範圍之內是否有眼存在。", "green", 2, 1);
-        whiteE = new Item("whiteE", "WhiteE", "WhiteE", "可使用一次，使該回合行動點數增加三點，可疊加。", "green", 2, 1);
+        whiteA = new Item("whiteA", "髒兮兮的手術刀", "WhiteA", "可使用一次，三回合內攻擊力提升2點，可疊加。", "white", 2, 1);
+        whiteB = new Item("whiteB", "快碎的防暴盾牌", "WhiteB", "可使用一次，二回合內防禦力提升3點，可疊加。", "white", 2, 1);
+        whiteC = new Item("whiteC", "快沒電的手電筒", "WhiteC", "可使用一次，此回合視野距離擴大。", "white", 2, 1);
+        whiteD = new Item("whiteD", "簡陋的雷達", "WhiteD", "可使用一次，可得九宮格範圍之內是否有眼存在。", "white", 2, 1);
+        whiteE = new Item("whiteE", "生命之水（波蘭產）", "WhiteE", "可使用一次，使該回合行動點數增加三點，可疊加。", "white", 2, 1);
 
 
     }
     [PunRPC]
-    private void UpdatePlayers(int playerID, string playerNickName, int playerLocationI, int playerLocationJ)
+    private void UpdatePlayers(int playerID, string playerNickName, int playerLocationI, int playerLocationJ, Vector3[] tempWardLocations, int teamMate)
     {
-        playerInfo = new PlayerInfo(playerNickName, playerLocationI, playerLocationJ);
+        List<Vector3> WardLocations= new List<Vector3>(tempWardLocations);
+        playerInfo = new PlayerInfo(playerNickName, playerLocationI, playerLocationJ, WardLocations, teamMate);
 
         if (playersInfo.ContainsKey(playerID))
         {
@@ -1545,14 +1730,13 @@ public class Map : MonoBehaviour
     private void CreatePuddle()
     {
         int randomResult;
-        int itemPossibility = mapSize / 3;
-
+        int puddlePossibility = mapSize / 3;
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
                 randomResult = Random.Range(0, 100);
-                if (grassGrid[i, j] == 1 && (randomResult < itemPossibility))
+                if (grassGrid[i, j] == 1 && (randomResult < puddlePossibility))
                 {
                     grassGrid[i, j] = 0;
                     puddleGrid[i, j] = 1;
@@ -1567,7 +1751,8 @@ public class Map : MonoBehaviour
     private void CreateTrap()
     {
         int randomResult;
-        int trapPossibility = mapSize / 5;
+        int trapPossibility = mapSize / 8;
+        //trapPossibility = 30;
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
@@ -1738,6 +1923,8 @@ public class Map : MonoBehaviour
     */
     private void CreateStoreItem()
     {
+        oldStateIndividual = Random.state;
+        Random.state = oldStateMutual;
         itemSoldOutGrid = new int[storeNum, storeItemNum];
         storeList = new ArrayList();
         for (int i = 0; i < storeNum; i++)
@@ -1769,7 +1956,8 @@ public class Map : MonoBehaviour
             }
             storeList.Add(storeItemList);
         }
-
+        oldStateMutual = Random.state;
+        Random.state = oldStateIndividual;
 
     }
     /*
@@ -1875,6 +2063,11 @@ public class Map : MonoBehaviour
             playerID = (int)PhotonNetwork.LocalPlayer.CustomProperties["selectedCharacter"];
             player = GameObject.Find("Player" + playerID.ToString()).GetComponent<Player>();
             locationPre = player.P_GetLocation();
+            string timeStamp = PhotonNetwork.ServerTimestamp.ToString();
+            timeStamp = timeStamp.Substring(1, 5);
+            oldStateMutual = Random.state;
+            individualSeed = (player.P_GetNickName() + playerID.ToString() + timeStamp).GetHashCode();
+            Random.InitState(individualSeed);
         }
         if (gameManager == null)
         {
@@ -2125,9 +2318,9 @@ public class Map : MonoBehaviour
     /*
      判斷是否是九宮格
     */
-    public bool Surrounding(int x, int z, int i, int j)
+    public bool Surrounding(int i, int j, int x, int z)
     {
-        if ((x == i && z == j) || (x == i + 1 && z == j) || (x == i - 1 && z == j) || (x == i && z == j + 1) || (x == i && z == j - 1) || (x == i + 1 && z == j + 1) || (x == i + 1 && z == j - 1) || (x == i - 1 && z == j + 1) || (x == i - 1 && z == j - 1))
+        if ((i == x && j == z) || (i == x + 1 && j == z) || (i == x - 1 && j == z) || (i == x && j == z + 1) || (i == x && j == z - 1) || (i == x + 1 && j == z + 1) || (i == x + 1 && j == z - 1) || (i == x - 1 && j == z + 1) || (i == x - 1 && j == z - 1))
         {
             return true;
         }
@@ -2146,8 +2339,98 @@ public class Map : MonoBehaviour
     {
         if (beSearchedList[playerID] == 1)
         {
-            gameManager.M_ShowInfo("被敵人搜索出來", 2, true);
+            if(gameManager.M_GetRound() >= 5)
+                gameManager.M_ShowInfo("被敵人搜索出來", 2, true);
+            else
+                gameManager.M_ShowInfo("被其他玩家搜索出來", 2, true);
             photonView.RPC("ShowUpUpdateView", RpcTarget.All, player.GetComponent<PhotonView>().ViewID);
+        }
+    }
+    [PunRPC]
+    public void EyeBeDetected(int[] beSearchedList, Vector3[] beDetectedEyeTemp, bool removeEye)
+    {
+        List<Vector3> beDetectedEye = new List<Vector3>(beDetectedEyeTemp);
+        if (beSearchedList[playerID] == 1)
+        {
+            List <Vector3> tempWardLocations = new List<Vector3>(player.P_GetWardLocations());
+            List <Eye> tempWards = new List<Eye>(player.P_GetWards());
+            int eyeNum = 0;
+            foreach (Vector3 v in beDetectedEye)
+            {
+                if (tempWardLocations.Contains(v))
+                {
+                    eyeNum++;
+                    if (removeEye)
+                    {
+                        tempWardLocations.Remove(v);
+                        int removeEyeIndex = 0;
+                        foreach(Eye eye in tempWards)
+                        {
+                            if(eye.GetOwnerID() == playerID && eye.GetEyeLocation() == v)
+                            {
+                                removeEyeIndex = tempWards.IndexOf(eye);
+                            }
+                        }
+                        tempWards[removeEyeIndex].Destroy();
+                        tempWards.RemoveAt(removeEyeIndex);
+                    }
+                }
+            }
+            player.P_SetWardLocations(tempWardLocations);
+            player.P_SetWards(tempWards);
+            if (removeEye)
+            {
+                gameManager.M_ShowInfo("我方設置的 " + eyeNum.ToString() + " 個眼被敵人清除", 2, true);
+            }
+            else
+            {
+                gameManager.M_ShowInfo("我方設置的 " + eyeNum.ToString() + " 個眼被敵人偵測出來", 2, true);
+            }
+                
+
+        }
+        else
+        {
+            if (removeEye)
+            {
+                List<Vector3> removeDetectEye = new List<Vector3>();
+                List<Vector3> removeNotDetectEye = new List<Vector3>();
+
+                foreach (Vector3 v in beDetectedEye)
+                {
+                    if (AllDetectEyeLocations.Contains(v))
+                    {
+                        removeDetectEye.Add(v);
+                    }
+                    else
+                    {
+                        removeNotDetectEye.Add(v);
+                    }
+                }
+                GameObject[] obj = new GameObject[removeNotDetectEye.Count];
+                for(int i = 0; i < removeNotDetectEye.Count; i++)
+                    obj[i] = (GameObject)Instantiate(Resources.Load("BlackFlag"), removeNotDetectEye[i], Quaternion.identity);
+
+                StartCoroutine(ShowBeRemoveEye());
+                IEnumerator ShowBeRemoveEye()
+                {
+                    yield return new WaitForSeconds(2);
+                    for (int i = 0; i < removeNotDetectEye.Count; i++)
+                        Destroy(obj[i]);
+                    foreach (Vector3 v in removeDetectEye)
+                        AllDetectEyeLocations.Remove(v);
+                }
+            }
+            else
+            {
+                foreach (Vector3 v in beDetectedEye)
+                {
+                    if (!AllDetectEyeLocations.Contains(v))
+                    {
+                        AllDetectEyeLocations.Add(v);
+                    }
+                }
+            }
         }
     }
     [PunRPC]
@@ -2169,12 +2452,16 @@ public class Map : MonoBehaviour
         public string nickName { get; set; }
         public int locationI { get; set; }
         public int locationJ { get; set; }
+        public List<Vector3> WardLocations { get; set; }
+        public int teamMate { get; set; }
 
-        public PlayerInfo(string nickName, int locationI, int locationJ)
+        public PlayerInfo(string nickName, int locationI, int locationJ, List<Vector3> WardLocations, int teamMate)
         {
             this.nickName = nickName;
             this.locationI = locationI;
             this.locationJ = locationJ;
+            this.WardLocations = WardLocations;
+            this.teamMate = teamMate;
         }
     }
     public void SetConfirmResult(int confirmResult)
@@ -2183,22 +2470,28 @@ public class Map : MonoBehaviour
         this.confirmResult = confirmResult;
     }
 
-    private void MoveOnMapControl()
+    public void MoveOnMapControl()
     {
-        if (Input.GetKeyDown(KeyCode.W))//往前走
+        if (Input.GetKeyDown(KeyCode.W) && (((!onPuddle && !onTrap) || onTrapOrPuddleMove) && !playerIsDoingSomething))//往前走
         {
-            if (!(onPuddle || onTrap)){
-                player.P_SetMoveLock(false);
+            
+            if (player.P_GetActionPoint() > 0)
+                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 0, 0);
+
+            bool containBoat = false;
+            foreach (Item i in player.P_GetItemList())
+            {
+                if (i.GetID() == "blueD")
+                {
+                    containBoat = true;
+                }
             }
 
-            if (player.P_GetActionPoint() > 0){
-                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 0, 0);
-            }
             if (treeGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1)
             {
                 player.P_SetMoveLock(true);
             }
-            if (reedGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
+            else if (reedGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
             {
                 int playerLocationI = (int)player.P_GetLocation().x;
                 int playerLocationJ = (int)player.P_GetLocation().z;
@@ -2231,36 +2524,37 @@ public class Map : MonoBehaviour
                         }
                     }
                 }
+            }         
+            else if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1 && !containBoat)
+            {
+                player.P_SetMoveLock(true);
             }
+            else
+            {
+                onTrapOrPuddleMove = false;
+            }
+
+        }
+        else if (Input.GetKeyDown(KeyCode.A) && (((!onPuddle && !onTrap) || onTrapOrPuddleMove) && !playerIsDoingSomething))//往左走
+        {
+            
+            if (player.P_GetActionPoint() > 0)
+                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 270, 0);
+
             bool containBoat = false;
-            foreach(Item i in player.P_GetItemList())
+            foreach (Item i in player.P_GetItemList())
             {
                 if (i.GetID() == "blueD")
                 {
                     containBoat = true;
                 }
             }
-            if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z + 1] == 1 && !containBoat)
-            {
-                player.P_SetMoveLock(true);
-            }
-
-        }
-        if (Input.GetKeyDown(KeyCode.A))//往左走
-        {
-            if (!(onPuddle || onTrap)){
-                player.P_SetMoveLock(false);
-            }
-
-            if (player.P_GetActionPoint() > 0){
-                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 270, 0);
-            }
 
             if (treeGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1)
             {
                 player.P_SetMoveLock(true);
             }
-            if (reedGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
+            else if (reedGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
             {
                 int playerLocationI = (int)player.P_GetLocation().x;
                 int playerLocationJ = (int)player.P_GetLocation().z;
@@ -2294,6 +2588,20 @@ public class Map : MonoBehaviour
                     }
                 }
             }
+            else if (waterGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1 && !containBoat) {
+                player.P_SetMoveLock(true);
+            }
+            else
+            {
+                onTrapOrPuddleMove = false;
+            }
+        }
+
+        else if (Input.GetKeyDown(KeyCode.S) && (((!onPuddle && !onTrap) || onTrapOrPuddleMove) && !playerIsDoingSomething))//往後走
+        {
+            if (player.P_GetActionPoint() > 0)
+                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+
             bool containBoat = false;
             foreach (Item i in player.P_GetItemList())
             {
@@ -2302,25 +2610,12 @@ public class Map : MonoBehaviour
                     containBoat = true;
                 }
             }
-            if (waterGrid[(int)player.P_GetLocation().x - 1, (int)player.P_GetLocation().z] == 1 && !containBoat) {
-                player.P_SetMoveLock(true);
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.S))//往後走
-        {
-            if (!(onPuddle || onTrap)){
-                player.P_SetMoveLock(false);
-            }
-
-            if (player.P_GetActionPoint() > 0){
-                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 180, 0);
-            }
 
             if (treeGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1)
             {
                 player.P_SetMoveLock(true);
             }
-            if (reedGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
+            else if (reedGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
             {
                 int playerLocationI = (int)player.P_GetLocation().x;
                 int playerLocationJ = (int)player.P_GetLocation().z;
@@ -2338,7 +2633,6 @@ public class Map : MonoBehaviour
                     }
                     if (confirmResult == 1)
                     {
-                        Debug.LogError(player.P_GetActionPoint());
                         if (player.P_GetActionPoint() <= 4)
                         {
                             gameManager.M_ShowInfo("行動點數不足", 1);
@@ -2354,6 +2648,21 @@ public class Map : MonoBehaviour
                     }
                 }
             }
+            else if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1 && !containBoat)
+            {
+                player.P_SetMoveLock(true);
+            }
+            else
+            {
+                onTrapOrPuddleMove = false;
+            }
+        }
+
+        else if (Input.GetKeyDown(KeyCode.D) && (((!onPuddle && !onTrap) || onTrapOrPuddleMove) && !playerIsDoingSomething))//往右走
+        { 
+            if (player.P_GetActionPoint() > 0)
+                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 90, 0);
+
             bool containBoat = false;
             foreach (Item i in player.P_GetItemList())
             {
@@ -2362,26 +2671,12 @@ public class Map : MonoBehaviour
                     containBoat = true;
                 }
             }
-            if (waterGrid[(int)player.P_GetLocation().x, (int)player.P_GetLocation().z - 1] == 1 && !containBoat)
-            {
-                player.P_SetMoveLock(true);
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.D))//往右走
-        {
-            if (!(onPuddle || onTrap)){
-                player.P_SetMoveLock(false);
-            }
-
-            if (player.P_GetActionPoint() > 0){
-                player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 90, 0);
-            }
 
             if (treeGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1)
             {
                 player.P_SetMoveLock(true);
             }
-            if (reedGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
+            else if (reedGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1 && player.P_GetActionPoint() != 0 && !player.P_GetMoveLock())
             {
                 int playerLocationI = (int)player.P_GetLocation().x;
                 int playerLocationJ = (int)player.P_GetLocation().z;
@@ -2415,35 +2710,40 @@ public class Map : MonoBehaviour
                     }
                 }
             }
-            bool containBoat = false;
-            foreach (Item i in player.P_GetItemList())
-            {
-                if (i.GetID() == "blueD")
-                {
-                    containBoat = true;
-                }
-            }
-            if (waterGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1 && !containBoat)
+            else if (waterGrid[(int)player.P_GetLocation().x + 1, (int)player.P_GetLocation().z] == 1 && !containBoat)
             {
                 player.P_SetMoveLock(true);
             }
+            else
+            {
+                onTrapOrPuddleMove = false;
+            }
         }
-        if (Input.GetKeyDown(KeyCode.C))
+        else if (Input.GetKeyUp(KeyCode.W) || Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.S) || Input.GetKeyUp(KeyCode.D))
         {
-            S_ChopTheTree();
-
+            if (((!onPuddle && !onTrap) || onTrapOrPuddleMove) && !playerIsDoingSomething)
+                player.P_SetMoveLock(false);
         }
-        if (Input.GetKeyDown(KeyCode.V))
+
+        
+        //press Space: put ward at current location
+        if (Input.GetKeyDown("space") && player.P_GetWardAmountUnused() >= 1)
         {
-            S_CreatePortal();
-
+            //check if able to put ward(ward amount >= 1)
+            if (gameManager.M_GetRound() >= 5)
+            {
+                photonView.RPC("TeamAddWardRPC", RpcTarget.All, player.P_GetTeam(), player.P_GetLocation());
+            }
+            else
+            {
+                player.P_PutWard(player.P_GetLocation());
+                List<Eye> temp = new List<Eye>(player.P_GetWards());
+                temp.Add(new Eye(playerID, player.P_GetTeam(), player.P_GetLocation()));
+                player.P_SetWards(temp);
+            }    
+            player.P_SetWardAmountUnused(player.P_GetWardAmountUnused() - 1);
+            player.P_SetWardAmountUsed(player.P_GetWardAmountUsed() + 1);
         }
-        if (Input.GetKeyDown(KeyCode.B))
-        {
-            S_RandomTransfer();
-
-        }
-
     }
     private (int, int) GetFrontLocation(int playerLocationI, int playerLocationJ, int rotationY)
     {
@@ -2480,6 +2780,8 @@ public class Map : MonoBehaviour
     {
         gameManager.M_ShowInfo("背包空間不足", 0.01f);
         isChoosingItemToDiscard = true;
+        isArbitrarilyDiscard = false;
+        bagPanel.transform.Find("CancelDiscardBtn").gameObject.SetActive(false);
         bagPanel.SetActive(false);
         bagPanel.GetComponent<RectTransform>().anchoredPosition = chooseItemToDiscardRect;
         for (int i = 0; i < bagItemNum; i++)
@@ -2510,6 +2812,7 @@ public class Map : MonoBehaviour
             bagItemObj[bagItemNum].transform.Find("ItemImage".ToString()).GetComponent<RawImage>().texture = extraTemp;
 
         }
+        bagPanel.transform.Find("DiscardBtn").gameObject.SetActive(false);
         bagPanel.SetActive(true);
     }
     public void DiscardItem(GameObject itemImage)
@@ -2598,6 +2901,7 @@ public class Map : MonoBehaviour
                     S_ResetCursor();
                     BagItem.Click = false;
                     BagBeClick.Click = false;
+                    bagPanel.transform.Find("DiscardBtn").gameObject.SetActive(true);
                 }
             }
         }      
@@ -2622,5 +2926,42 @@ public class Map : MonoBehaviour
         bagPanel.transform.Find("DiscardBtn").gameObject.SetActive(true);
         bagPanel.transform.Find("CancelDiscardBtn").gameObject.SetActive(false);
     }
+    public void PlayerFacing(int i, int j, int x, int z)
+    {
+        if (i == x && j == z)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 0, 0);
+        else if (i == x + 1  && j == z)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 90, 0);
+        else if(i == x - 1 && j == z)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 270, 0);
+        else if(i == x && j == z + 1)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 0, 0);
+        else if(i == x && j == z - 1)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 180, 0);
+        else if(i == x + 1 && j == z + 1)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 45, 0);
+        else if(i == x + 1 && j == z - 1)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 135, 0);
+        else if(i == x - 1 && j == z + 1)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 315, 0);
+        else if(i == x - 1 && j == z - 1)
+            player.GetComponent<Transform>().rotation = Quaternion.Euler(0, 225, 0);
+
+    }
+
+    [PunRPC]
+    void TeamAddWardRPC(int team, Vector3 location)
+    {
+        //GameManager.gameManager.M_ShowInfo(player.P_GetTeam().ToString());
+        if (player.P_GetTeam() == team)
+        {
+            player.P_PutWard(location);
+            List<Eye> temp = new List<Eye>(player.P_GetWards());
+            temp.Add(new Eye(playerID, team, location));
+            player.P_SetWards(temp);
+        }
+    }
+
+
 
 }
