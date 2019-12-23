@@ -2,6 +2,8 @@
 NTU game programming project
 
 ## Updates:
+- 191223 ver:
+  - added eye view to minimap
 - 191222 ver:
   - 遊戲流程完成
   - 遊戲結束條件設定完成
