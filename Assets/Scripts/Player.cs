@@ -227,7 +227,7 @@ public class Player : MonoBehaviour
                                 Debug.Log("attack rival");
                                 photonView.RPC("AttackRivals", RpcTarget.All, i, p_attack - rivDef);
                                 PhotonNetwork.Instantiate("VFX/GotAttackVFX", new Vector3(rivLoc.x, 1.0f, rivLoc.z), Quaternion.identity, 0);
-                                GameManager.gameManager.M_ShowInfo("成功攻擊敵人，敵人骰子數 - " + (p_attack - rivDef).ToString());
+                                GameManager.gameManager.M_ShowInfo("成功攻擊敵人");
                                 PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = false;
 
                             }
