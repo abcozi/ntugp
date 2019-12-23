@@ -600,7 +600,7 @@ public class GameManager : MonoBehaviour
             else if(i+1 == playerTeamMate)
             {
                 //team mate
-                if(round >= 5 || player.playerInMyArea(iconPosToRealPos(playerImgs[i].transform.position)))
+                if(round >= 5 || player.playerInMyArea((Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer"+playerTeamMate.ToString()]))
                 {
                     //Debug.Log("teammate appears at "+iconPosToRealPos(playerImgs[i].transform.position));
                     playerImgs[i].SetActive(true);
@@ -614,7 +614,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 //rivals
-                if(player.playerInMyArea(iconPosToRealPos(playerImgs[i].transform.position)))
+                if(player.playerInMyArea((Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer"+(i+1).ToString()]))
                 {
                     //Debug.Log("rival appears at "+iconPosToRealPos(playerImgs[i].transform.position));
                     

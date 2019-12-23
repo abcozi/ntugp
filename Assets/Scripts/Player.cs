@@ -611,6 +611,7 @@ public class Player : MonoBehaviour
         if(dis < Vector3.Distance(new Vector3(0, 0, 0), new Vector3(1, 1, 0)))
         {
             flag = true;
+            return flag;
         }
         return flag;
     }
