@@ -229,6 +229,7 @@ public class Player : MonoBehaviour
                                 PhotonNetwork.Instantiate("VFX/GotAttackVFX", new Vector3(rivLoc.x, 1.0f, rivLoc.z), Quaternion.identity, 0);
                                 GameManager.gameManager.M_ShowInfo("成功攻擊敵人");
                                 PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = false;
+                                break;
 
                             }
                             else if (rivDef >= p_attack && rivalAlive && quota)
@@ -237,10 +238,15 @@ public class Player : MonoBehaviour
                             }
                             else if (rivDef < p_attack && rivalAlive && !quota)
                             {
-                                if(GameManager.gameManager.M_GetTeamRound() == GameManager.gameManager.M_GetRound())
+                                if(GameManager.gameManager.M_GetTeamRound() == p_team)
+                                {
                                     GameManager.gameManager.M_ShowInfo("攻擊冷卻中");
-                                else
+                                }       
+                                else 
+                                {
                                     GameManager.gameManager.M_ShowInfo("防守狀態無法攻擊");
+
+                                }                                
                             }
 
 
