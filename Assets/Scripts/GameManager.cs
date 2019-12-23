@@ -133,7 +133,7 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         
-            try
+        try
             {
                 Debug.Log("update gamestate");
                 int round = (int)PhotonNetwork.LocalPlayer.CustomProperties["round"];
@@ -236,16 +236,17 @@ public class GameManager : MonoBehaviour
                         UpdateItemEffectState();
                         roundPre = round;
                     }
-
-                    //update minimap
-                    UpdateMinimap();
-
                     //master client updates timer
                     //all clients update timer value got from master client
                     //Debug.Log("timer: "+((int)tempTime).ToString());
                     UpdateTimerRoundText();
+                    //update minimap
+                    
+
+                    
                 }
-                if(vfxObj != null)
+                UpdateMinimap();
+                if (vfxObj != null)
         		{
             		vfxObj.GetComponent<Transform>().position = new Vector3(player.P_GetLocation().x - 0.04f, 2.5f, player.P_GetLocation().z);
         		}
@@ -392,7 +393,7 @@ public class GameManager : MonoBehaviour
     }
     public void UpdateTimerRoundText()
     {
-        if(round <= 4)
+        if (round <= 4)
         {
             timerText.text = ((int)(80.0f - tempTime)).ToString();
         }
