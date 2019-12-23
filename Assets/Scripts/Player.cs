@@ -199,71 +199,78 @@ public class Player : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.Z) && photonView.IsMine)
         {
-            int attackNum = 0;
-            //attack rivals
-            for(int i = 1 ; i <= 4 ; i ++)
+            if(p_actionPoint > 3 && GameManager.gameManager.M_GetTeamRound() == p_team)
             {
-                if(i == p_id || i == p_teamMate)
+                int attackNum = 0;
+                //attack rivals
+                for (int i = 1; i <= 4; i++)
                 {
-                    continue;
-                }
-                else
-                {
-                    try
+                    if (i == p_id || i == p_teamMate)
                     {
-                        //rivals
-                        Vector3 rivLoc = (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer" + i.ToString()];
-                        Vector3 myLoc = p_location;
-                        if (Vector3.Distance(rivLoc, myLoc) <= Vector3.Distance(new Vector3(0, 0, 0), new Vector3(2, 0, 2)))
+                        continue;
+                    }
+                    else
+                    {
+                        try
                         {
-                            attackNum++;
-                            //attack
-                            int rivDef = (int)PhotonNetwork.LocalPlayer.CustomProperties["def" + i.ToString()];
-                            bool rivalAlive = (bool)PhotonNetwork.LocalPlayer.CustomProperties["alive" + i.ToString()];
-                            bool quota = (bool)PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"];
-                            if (rivDef < p_attack && rivalAlive && quota)
+                            //rivals
+                            Vector3 rivLoc = (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer" + i.ToString()];
+                            Vector3 myLoc = p_location;
+                            if (Vector3.Distance(rivLoc, myLoc) <= Vector3.Distance(new Vector3(0, 0, 0), new Vector3(2, 0, 2)))
                             {
-
-                                Debug.Log("attack rival");
-                                photonView.RPC("AttackRivals", RpcTarget.All, i, p_attack - rivDef);
-                                PhotonNetwork.Instantiate("VFX/GotAttackVFX", new Vector3(rivLoc.x, 1.0f, rivLoc.z), Quaternion.identity, 0);
-                                GameManager.gameManager.M_ShowInfo("成功攻擊敵人");
-                                PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = false;
-                                break;
-
-                            }
-                            else if (rivDef >= p_attack && rivalAlive && quota)
-                            {
-                                GameManager.gameManager.M_ShowInfo("攻擊力不足");
-                            }
-                            else if (rivDef < p_attack && rivalAlive && !quota)
-                            {
-                                if(GameManager.gameManager.M_GetTeamRound() == p_team)
+                                attackNum++;
+                                //attack
+                                int rivDef = (int)PhotonNetwork.LocalPlayer.CustomProperties["def" + i.ToString()];
+                                bool rivalAlive = (bool)PhotonNetwork.LocalPlayer.CustomProperties["alive" + i.ToString()];
+                                bool quota = (bool)PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"];
+                                if (rivDef < p_attack && rivalAlive && quota)
                                 {
-                                    GameManager.gameManager.M_ShowInfo("攻擊冷卻中");
-                                }       
-                                else 
+
+                                    Debug.Log("attack rival");
+                                    photonView.RPC("AttackRivals", RpcTarget.All, i, p_attack - rivDef);
+                                    PhotonNetwork.Instantiate("VFX/GotAttackVFX", new Vector3(rivLoc.x, 1.0f, rivLoc.z), Quaternion.identity, 0);
+                                    p_actionPoint -= 3;
+                                    GameManager.gameManager.M_ShowInfo("成功攻擊敵人，消耗行動點數3點");
+                                    PhotonNetwork.LocalPlayer.CustomProperties["attackQuota"] = false;
+                                    break;
+
+                                }
+                                else if (rivDef >= p_attack && rivalAlive && quota)
                                 {
-                                    GameManager.gameManager.M_ShowInfo("防守狀態無法攻擊");
+                                    GameManager.gameManager.M_ShowInfo("攻擊力不足");
+                                }
+                                else if (rivDef < p_attack && rivalAlive && !quota)
+                                {
+                                    if (GameManager.gameManager.M_GetTeamRound() == p_team)
+                                    {
+                                        GameManager.gameManager.M_ShowInfo("攻擊冷卻中");
+                                    }
+                                    else
+                                    {
+                                        GameManager.gameManager.M_ShowInfo("防守狀態無法攻擊");
 
-                                }                                
+                                    }
+                                }
+
+
                             }
-
-
+                            else
+                            {
+                                //not attack
+                            }
                         }
-                        else
+                        catch (System.Exception ex)
                         {
-                            //not attack
+                            Debug.Log(ex.ToString());
                         }
                     }
-                    catch (System.Exception ex)
-                    {
-                        Debug.Log(ex.ToString());
-                    }
                 }
+                if (attackNum == 0)
+                    GameManager.gameManager.M_ShowInfo("周圍沒有敵人", 1, false);
             }
-            if(attackNum == 0)
-                GameManager.gameManager.M_ShowInfo("周圍沒有敵人", 1, false);
+            else if(p_actionPoint <= 3 && GameManager.gameManager.M_GetTeamRound() == p_team)
+                GameManager.gameManager.M_ShowInfo("行動點數不足", 1, false);
+
 
         }
     }
