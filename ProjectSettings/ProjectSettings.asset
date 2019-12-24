@@ -143,6 +143,9 @@ PlayerSettings:
     oculus:
       sharedDepthBuffer: 1
       dashSupport: 1
+      lowOverheadMode: 0
+      protectedContext: 0
+      v2Signing: 0
     enable360StereoCapture: 0
   protectGraphicsMemory: 0
   enableFrameTimingStats: 0
@@ -726,10 +729,10 @@ PlayerSettings:
   facebookXfbml: 0
   facebookFrictionlessRequests: 1
   apiCompatibilityLevel: 6
-  cloudProjectId: 34634b3d-3112-41f9-9c79-3cd1c9ebc087
+  cloudProjectId: 94513ef7-f0e9-4d82-84b3-a5c92b5c9032
   framebufferDepthMemorylessMode: 0
-  projectName: game
-  organizationId: elainefaith0314
+  projectName: game (4)
+  organizationId: henrylee0324
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0
