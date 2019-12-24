@@ -2752,9 +2752,6 @@ public class Map : MonoBehaviour
                 player.P_SetMoveLock(false);
         }
 
-        if (Input.GetKeyDown(KeyCode.X))
-            S_UsingDetectEyeItem(true);
-
         
         //press Space: put ward at current location
         if (Input.GetKeyDown("space") && player.P_GetWardAmountUnused() >= 1)
