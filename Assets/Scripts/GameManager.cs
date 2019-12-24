@@ -119,7 +119,10 @@ public class GameManager : MonoBehaviour
                 {
                     PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"] = player.transform.position;
                     UpdateMinimap();
-                }
+                    photonView.RPC("UpdatePositionToOthers", RpcTarget.All,
+                    (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"],
+                    player.transform.position, playerID);
+            }
                 catch(System.Exception ex)
                 {
 
