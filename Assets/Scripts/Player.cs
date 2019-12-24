@@ -164,15 +164,18 @@ public class Player : MonoBehaviour
                 //After walk animation, go back to wait.
                 //anim.Play("WAIT00", -1, 0f);
                 //Debug.Log("walk");
-                if (photonView.IsMine) { 
-                    playAnimation("WALK", p_id);
+                if (photonView.IsMine) {
+                    if (!GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("WALK"))
+                        playAnimation("WALK", p_id);
+
                     P_Movement();
                 }
             }
             else if (!Map.map.playerIsDoingSomething)
             {
                 if (photonView.IsMine) {
-                    playAnimation("WAIT00", p_id);
+                    if (!GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("WAIT00"))
+                        playAnimation("WAIT00", p_id);
                 }
             }
             

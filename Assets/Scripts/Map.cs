@@ -69,6 +69,7 @@ public class Map : MonoBehaviour
     private List<GameObject> AllDetectEyeObject;
     private GameObject pointLight;
     private bool addLightRange = false;
+    private bool mutualEye = false;
 
     //barren = 0, grass = 1, puddle = 2, reed = 3, trap = 4, tree = 5, portal = 6,  water = 7, store = 8, isolated grass = 100
     //initialization
@@ -77,7 +78,7 @@ public class Map : MonoBehaviour
         if (map == null)
         {
             map = this;
-        }
+        } 
     }
     void Start()
     {
@@ -140,7 +141,6 @@ public class Map : MonoBehaviour
                 portalPairFromPlayer[i, j] = -1;
             }
         }
-
     }
 
     //update is called once per frame
@@ -149,7 +149,21 @@ public class Map : MonoBehaviour
         //定期更新地形table
         SaveToTerrain();
         GetObject();
-        photonView.RPC("UpdatePlayers", RpcTarget.All, playerID, player.P_GetNickName(), (int)player.P_GetLocation().x, (int)player.P_GetLocation().z,  player.P_GetWardLocations().ToArray(), player.P_GetTeamMate());
+        if (!playersInfo.ContainsKey(playerID))
+        {
+            InitPlayers(playerID, player.P_GetNickName(), (int)player.P_GetLocation().x, (int)player.P_GetLocation().z, player.P_GetWardLocations().ToArray(), player.P_GetTeamMate());
+            photonView.RPC("UpdatePlayers", RpcTarget.All, playerID, player.P_GetNickName(), (int)player.P_GetLocation().x, (int)player.P_GetLocation().z, player.P_GetWardLocations().ToArray(), player.P_GetTeamMate());
+        }
+            
+        if (playersInfo[playerID].locationI != (int)player.P_GetLocation().x || playersInfo[playerID].locationJ != (int)player.P_GetLocation().z || !playersInfo[playerID].WardLocations.SequenceEqual(player.P_GetWardLocations()))
+        {
+            InitPlayers(playerID, player.P_GetNickName(), (int)player.P_GetLocation().x, (int)player.P_GetLocation().z, player.P_GetWardLocations().ToArray(), player.P_GetTeamMate());
+            photonView.RPC("UpdatePlayers", RpcTarget.All, playerID, player.P_GetNickName(), (int)player.P_GetLocation().x, (int)player.P_GetLocation().z, player.P_GetWardLocations().ToArray(), player.P_GetTeamMate());
+
+        }
+
+
+
         //foreach (KeyValuePair<int, int> playerViewID in playersViewID)
         //{
         //    Debug.LogError(playerViewID.Key);
@@ -593,7 +607,7 @@ public class Map : MonoBehaviour
             S_SetLightRange(false);
         }
 
-        if (gameManager.M_GetRound() == 5)
+        if (gameManager.M_GetRound() == 5 && !mutualEye)
         {
             foreach (KeyValuePair<int, PlayerInfo> playerInfo in playersInfo)
             {
@@ -612,6 +626,7 @@ public class Map : MonoBehaviour
                     break;
                 }
             }
+            mutualEye = true;
         }
 
     }
@@ -1396,6 +1411,18 @@ public class Map : MonoBehaviour
         whiteD = new Item("whiteD", "簡陋的雷達", "WhiteD", "可使用一次，可得九宮格範圍之內是否有眼存在。", "white", 2, 1);
         whiteE = new Item("whiteE", "生命之水（波蘭產）", "WhiteE", "可使用一次，使該回合行動點數增加三點，可疊加。", "white", 2, 1);
 
+
+    }
+    private void InitPlayers(int playerID, string playerNickName, int playerLocationI, int playerLocationJ, Vector3[] tempWardLocations, int teamMate)
+    {
+        List<Vector3> WardLocations = new List<Vector3>(tempWardLocations);
+        playerInfo = new PlayerInfo(playerNickName, playerLocationI, playerLocationJ, WardLocations, teamMate);
+
+        if (playersInfo.ContainsKey(playerID))
+        {
+            playersInfo.Remove(playerID);
+        }
+        playersInfo.Add(playerID, playerInfo);
 
     }
     [PunRPC]
@@ -2724,6 +2751,9 @@ public class Map : MonoBehaviour
             if (((!onPuddle && !onTrap) || onTrapOrPuddleMove) && !playerIsDoingSomething)
                 player.P_SetMoveLock(false);
         }
+
+        if (Input.GetKeyDown(KeyCode.X))
+            S_UsingDetectEyeItem(true);
 
         
         //press Space: put ward at current location

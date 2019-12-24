@@ -1096,6 +1096,7 @@ namespace Photon.Pun
 
             if (PhotonServerSettings.StartInOfflineMode)
             {
+                Debug.LogError("sadas");
                 OfflineMode = true;
                 return true;
             }
@@ -1369,7 +1370,7 @@ namespace Photon.Pun
 
 
         /// <summary>
-        /// Helper function which is called inside this class to erify if certain functions can be used (e.g. RPC when not connected)
+        /// Helper function which is called inside this class to verify if certain functions can be used (e.g. RPC when not connected)
         /// </summary>
         /// <returns></returns>
         private static bool VerifyCanUseNetwork()

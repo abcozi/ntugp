@@ -236,17 +236,20 @@ public class GameManager : MonoBehaviour
                         UpdateItemEffectState();
                         roundPre = round;
                     }
+                   
+
                     //master client updates timer
                     //all clients update timer value got from master client
                     //Debug.Log("timer: "+((int)tempTime).ToString());
                     UpdateTimerRoundText();
-                    //update minimap
-                    
+
 
                     
-                }
+
+            }
+                //update minimap
                 UpdateMinimap();
-                if (vfxObj != null)
+            if (vfxObj != null)
         		{
             		vfxObj.GetComponent<Transform>().position = new Vector3(player.P_GetLocation().x - 0.04f, 2.5f, player.P_GetLocation().z);
         		}
@@ -584,51 +587,55 @@ public class GameManager : MonoBehaviour
     }
     public void UpdateMinimap()
     {
-        //update my position to others
-        photonView.RPC("UpdatePositionToOthers", RpcTarget.All, 
-            (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"],
-            player.transform.position, playerID);
-        
-        //disable other player's icon
-        for(int i = 0 ; i < 4 ; i ++)
+        try
         {
-            if(i+1 == playerID)
+            
+            //disable other player's icon
+            for (int i = 0; i < 4; i++)
             {
-                //Debug.Log("I appears at "+iconPosToRealPos(playerImgs[i].transform.position));
-                    
-                playerImgs[i].SetActive(true);
-            }
-            else if(i+1 == playerTeamMate)
-            {
-                //team mate
-                if(round >= 5 || player.playerInMyArea((Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer"+playerTeamMate.ToString()]))
+                if (i + 1 == playerID)
                 {
-                    //Debug.Log("teammate appears at "+iconPosToRealPos(playerImgs[i].transform.position));
+                    //Debug.Log("I appears at "+iconPosToRealPos(playerImgs[i].transform.position));
+
                     playerImgs[i].SetActive(true);
+                }
+                else if (i + 1 == playerTeamMate)
+                {
+                    //team mate
+                    if (round >= 5 || player.playerInMyArea((Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer" + playerTeamMate.ToString()]))
+                    {
+                        //Debug.Log("teammate appears at "+iconPosToRealPos(playerImgs[i].transform.position));
+                        playerImgs[i].SetActive(true);
+                    }
+                    else
+                    {
+                        //Debug.Log("teammate disappeared. "+iconPosToRealPos(playerImgs[i].transform.position));
+                        playerImgs[i].SetActive(false);
+                    }
                 }
                 else
                 {
-                    //Debug.Log("teammate disappeared. "+iconPosToRealPos(playerImgs[i].transform.position));
-                    playerImgs[i].SetActive(false);
-                }
-            }
-            else
-            {
-                //rivals
-                if(player.playerInMyArea((Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer"+(i+1).ToString()]))
-                {
-                    //Debug.Log("rival appears at "+iconPosToRealPos(playerImgs[i].transform.position));
-                    
-                    playerImgs[i].SetActive(true);
-                }
-                else
-                {
-                    //Debug.Log("rival disappeared. "+iconPosToRealPos(playerImgs[i].transform.position));
-                    
-                    playerImgs[i].SetActive(false);
+                    //rivals
+                    if (player.playerInMyArea((Vector3)PhotonNetwork.LocalPlayer.CustomProperties["locPlayer" + (i + 1).ToString()]))
+                    {
+                        //Debug.Log("rival appears at "+iconPosToRealPos(playerImgs[i].transform.position));
+
+                        playerImgs[i].SetActive(true);
+                    }
+                    else
+                    {
+                        //Debug.Log("rival disappeared. "+iconPosToRealPos(playerImgs[i].transform.position));
+
+                        playerImgs[i].SetActive(false);
+                    }
                 }
             }
         }
+        catch
+        {
+
+        }
+        
     }
     public Vector3 iconPosToRealPos(Vector3 iconPos)
     {
@@ -644,6 +651,7 @@ public class GameManager : MonoBehaviour
         Vector3 location = player.P_GetLocation();
         int tempActionPoint = player.P_GetActionPoint();
         PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"] = location;
+        
         //紀錄現在的location
         if (dir == 0)
         {
@@ -671,6 +679,11 @@ public class GameManager : MonoBehaviour
         player.P_SetLocation(location);
         //更動Player的Location
         //Debug.Log("x: " + location.x + ", y: " + location.y + ", z: " + location.z);
+
+        //update my position to others
+        photonView.RPC("UpdatePositionToOthers", RpcTarget.All,
+            (Vector3)PhotonNetwork.LocalPlayer.CustomProperties["lastLoc"],
+            player.transform.position, playerID);
     }
 
     public void M_RowDice(int num)
