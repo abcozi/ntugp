@@ -232,7 +232,7 @@ namespace Photon.Pun
             // Cleanup all network objects (all spawned PhotonViews, local and remote)
             if (autoCleanupSettingOfRoom || offlineModeRoom != null)
             {
-                //LocalCleanupAnythingInstantiated(true);
+                LocalCleanupAnythingInstantiated(true);
             }
         }
 
